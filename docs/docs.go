@@ -511,7 +511,7 @@ var SwaggerInfo = &swag.Spec{
 	Host:             "localhost:8080",
 	BasePath:         "/",
 	Schemes:          []string{},
-	Title:            "Kratify Backend API",
+	Title:            "Backend API",
 	Description:      "Production-ready Gin API with clean architecture",
 	InfoInstanceName: "swagger",
 	SwaggerTemplate:  docTemplate,

@@ -1,311 +1,311 @@
 basePath: /
 definitions:
-  dto.AuthResponse:
-    properties:
-      token:
-        type: string
-      user:
-        $ref: '#/definitions/dto.UserResponse'
-    type: object
-  dto.ChangePasswordRequest:
-    properties:
-      new_password:
-        minLength: 6
-        type: string
-      old_password:
-        type: string
-    required:
-    - new_password
-    - old_password
-    type: object
-  dto.LoginRequest:
-    properties:
-      email:
-        type: string
-      password:
-        type: string
-    required:
-    - email
-    - password
-    type: object
-  dto.RegisterRequest:
-    properties:
-      email:
-        type: string
-      name:
-        minLength: 2
-        type: string
-      password:
-        minLength: 6
-        type: string
-    required:
-    - email
-    - name
-    - password
-    type: object
-  dto.UpdateUserRequest:
-    properties:
-      name:
-        minLength: 2
-        type: string
-    type: object
-  dto.UserResponse:
-    properties:
-      email:
-        type: string
-      id:
-        type: integer
-      name:
-        type: string
-    type: object
-  response.Response:
-    properties:
-      data: {}
-      error: {}
-      message:
-        type: string
-      success:
-        type: boolean
-    type: object
+     dto.AuthResponse:
+          properties:
+               token:
+                    type: string
+               user:
+                    $ref: "#/definitions/dto.UserResponse"
+          type: object
+     dto.ChangePasswordRequest:
+          properties:
+               new_password:
+                    minLength: 6
+                    type: string
+               old_password:
+                    type: string
+          required:
+               - new_password
+               - old_password
+          type: object
+     dto.LoginRequest:
+          properties:
+               email:
+                    type: string
+               password:
+                    type: string
+          required:
+               - email
+               - password
+          type: object
+     dto.RegisterRequest:
+          properties:
+               email:
+                    type: string
+               name:
+                    minLength: 2
+                    type: string
+               password:
+                    minLength: 6
+                    type: string
+          required:
+               - email
+               - name
+               - password
+          type: object
+     dto.UpdateUserRequest:
+          properties:
+               name:
+                    minLength: 2
+                    type: string
+          type: object
+     dto.UserResponse:
+          properties:
+               email:
+                    type: string
+               id:
+                    type: integer
+               name:
+                    type: string
+          type: object
+     response.Response:
+          properties:
+               data: {}
+               error: {}
+               message:
+                    type: string
+               success:
+                    type: boolean
+          type: object
 host: localhost:8080
 info:
-  contact:
-    email: support@swagger.io
-    name: API Support
-    url: http://www.swagger.io/support
-  description: Production-ready Gin API with clean architecture
-  license:
-    name: MIT
-    url: https://opensource.org/licenses/MIT
-  termsOfService: http://swagger.io/terms/
-  title: Kratify Backend API
-  version: "1.0"
+     contact:
+          email: support@swagger.io
+          name: API Support
+          url: http://www.swagger.io/support
+     description: Production-ready Gin API with clean architecture
+     license:
+          name: MIT
+          url: https://opensource.org/licenses/MIT
+     termsOfService: http://swagger.io/terms/
+     title: Backend API
+     version: "1.0"
 paths:
-  /api/auth/login:
-    post:
-      consumes:
-      - application/json
-      description: Login with email and password
-      parameters:
-      - description: Login Request
-        in: body
-        name: request
-        required: true
-        schema:
-          $ref: '#/definitions/dto.LoginRequest'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            allOf:
-            - $ref: '#/definitions/response.Response'
-            - properties:
-                data:
-                  $ref: '#/definitions/dto.AuthResponse'
-              type: object
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/response.Response'
-        "401":
-          description: Unauthorized
-          schema:
-            $ref: '#/definitions/response.Response'
-      summary: Login user
-      tags:
-      - auth
-  /api/auth/register:
-    post:
-      consumes:
-      - application/json
-      description: Register a new user with email, password, and name
-      parameters:
-      - description: Register Request
-        in: body
-        name: request
-        required: true
-        schema:
-          $ref: '#/definitions/dto.RegisterRequest'
-      produces:
-      - application/json
-      responses:
-        "201":
-          description: Created
-          schema:
-            allOf:
-            - $ref: '#/definitions/response.Response'
-            - properties:
-                data:
-                  $ref: '#/definitions/dto.AuthResponse'
-              type: object
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/response.Response'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/response.Response'
-      summary: Register a new user
-      tags:
-      - auth
-  /api/users:
-    get:
-      description: Get list of all users
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            allOf:
-            - $ref: '#/definitions/response.Response'
-            - properties:
-                data:
-                  items:
-                    $ref: '#/definitions/dto.UserResponse'
-                  type: array
-              type: object
-        "401":
-          description: Unauthorized
-          schema:
-            $ref: '#/definitions/response.Response'
-      security:
-      - BearerAuth: []
-      summary: Get all users
-      tags:
-      - users
-  /api/users/{id}:
-    delete:
-      description: Delete a user by ID
-      parameters:
-      - description: User ID
-        in: path
-        name: id
-        required: true
-        type: integer
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/response.Response'
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/response.Response'
-        "401":
-          description: Unauthorized
-          schema:
-            $ref: '#/definitions/response.Response'
-      security:
-      - BearerAuth: []
-      summary: Delete user
-      tags:
-      - users
-  /api/users/change-password:
-    put:
-      consumes:
-      - application/json
-      description: Change current user password
-      parameters:
-      - description: Change Password Request
-        in: body
-        name: request
-        required: true
-        schema:
-          $ref: '#/definitions/dto.ChangePasswordRequest'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/response.Response'
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/response.Response'
-        "401":
-          description: Unauthorized
-          schema:
-            $ref: '#/definitions/response.Response'
-      security:
-      - BearerAuth: []
-      summary: Change user password
-      tags:
-      - users
-  /api/users/profile:
-    get:
-      description: Get current user profile
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            allOf:
-            - $ref: '#/definitions/response.Response'
-            - properties:
-                data:
-                  $ref: '#/definitions/dto.UserResponse'
-              type: object
-        "401":
-          description: Unauthorized
-          schema:
-            $ref: '#/definitions/response.Response'
-        "404":
-          description: Not Found
-          schema:
-            $ref: '#/definitions/response.Response'
-      security:
-      - BearerAuth: []
-      summary: Get user profile
-      tags:
-      - users
-    put:
-      consumes:
-      - application/json
-      description: Update current user profile
-      parameters:
-      - description: Update User Request
-        in: body
-        name: request
-        required: true
-        schema:
-          $ref: '#/definitions/dto.UpdateUserRequest'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            allOf:
-            - $ref: '#/definitions/response.Response'
-            - properties:
-                data:
-                  $ref: '#/definitions/dto.UserResponse'
-              type: object
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/response.Response'
-        "401":
-          description: Unauthorized
-          schema:
-            $ref: '#/definitions/response.Response'
-      security:
-      - BearerAuth: []
-      summary: Update user profile
-      tags:
-      - users
+     /api/auth/login:
+          post:
+               consumes:
+                    - application/json
+               description: Login with email and password
+               parameters:
+                    - description: Login Request
+                      in: body
+                      name: request
+                      required: true
+                      schema:
+                           $ref: "#/definitions/dto.LoginRequest"
+               produces:
+                    - application/json
+               responses:
+                    "200":
+                         description: OK
+                         schema:
+                              allOf:
+                                   - $ref: "#/definitions/response.Response"
+                                   - properties:
+                                          data:
+                                               $ref: "#/definitions/dto.AuthResponse"
+                                     type: object
+                    "400":
+                         description: Bad Request
+                         schema:
+                              $ref: "#/definitions/response.Response"
+                    "401":
+                         description: Unauthorized
+                         schema:
+                              $ref: "#/definitions/response.Response"
+               summary: Login user
+               tags:
+                    - auth
+     /api/auth/register:
+          post:
+               consumes:
+                    - application/json
+               description: Register a new user with email, password, and name
+               parameters:
+                    - description: Register Request
+                      in: body
+                      name: request
+                      required: true
+                      schema:
+                           $ref: "#/definitions/dto.RegisterRequest"
+               produces:
+                    - application/json
+               responses:
+                    "201":
+                         description: Created
+                         schema:
+                              allOf:
+                                   - $ref: "#/definitions/response.Response"
+                                   - properties:
+                                          data:
+                                               $ref: "#/definitions/dto.AuthResponse"
+                                     type: object
+                    "400":
+                         description: Bad Request
+                         schema:
+                              $ref: "#/definitions/response.Response"
+                    "500":
+                         description: Internal Server Error
+                         schema:
+                              $ref: "#/definitions/response.Response"
+               summary: Register a new user
+               tags:
+                    - auth
+     /api/users:
+          get:
+               description: Get list of all users
+               produces:
+                    - application/json
+               responses:
+                    "200":
+                         description: OK
+                         schema:
+                              allOf:
+                                   - $ref: "#/definitions/response.Response"
+                                   - properties:
+                                          data:
+                                               items:
+                                                    $ref: "#/definitions/dto.UserResponse"
+                                               type: array
+                                     type: object
+                    "401":
+                         description: Unauthorized
+                         schema:
+                              $ref: "#/definitions/response.Response"
+               security:
+                    - BearerAuth: []
+               summary: Get all users
+               tags:
+                    - users
+     /api/users/{id}:
+          delete:
+               description: Delete a user by ID
+               parameters:
+                    - description: User ID
+                      in: path
+                      name: id
+                      required: true
+                      type: integer
+               produces:
+                    - application/json
+               responses:
+                    "200":
+                         description: OK
+                         schema:
+                              $ref: "#/definitions/response.Response"
+                    "400":
+                         description: Bad Request
+                         schema:
+                              $ref: "#/definitions/response.Response"
+                    "401":
+                         description: Unauthorized
+                         schema:
+                              $ref: "#/definitions/response.Response"
+               security:
+                    - BearerAuth: []
+               summary: Delete user
+               tags:
+                    - users
+     /api/users/change-password:
+          put:
+               consumes:
+                    - application/json
+               description: Change current user password
+               parameters:
+                    - description: Change Password Request
+                      in: body
+                      name: request
+                      required: true
+                      schema:
+                           $ref: "#/definitions/dto.ChangePasswordRequest"
+               produces:
+                    - application/json
+               responses:
+                    "200":
+                         description: OK
+                         schema:
+                              $ref: "#/definitions/response.Response"
+                    "400":
+                         description: Bad Request
+                         schema:
+                              $ref: "#/definitions/response.Response"
+                    "401":
+                         description: Unauthorized
+                         schema:
+                              $ref: "#/definitions/response.Response"
+               security:
+                    - BearerAuth: []
+               summary: Change user password
+               tags:
+                    - users
+     /api/users/profile:
+          get:
+               description: Get current user profile
+               produces:
+                    - application/json
+               responses:
+                    "200":
+                         description: OK
+                         schema:
+                              allOf:
+                                   - $ref: "#/definitions/response.Response"
+                                   - properties:
+                                          data:
+                                               $ref: "#/definitions/dto.UserResponse"
+                                     type: object
+                    "401":
+                         description: Unauthorized
+                         schema:
+                              $ref: "#/definitions/response.Response"
+                    "404":
+                         description: Not Found
+                         schema:
+                              $ref: "#/definitions/response.Response"
+               security:
+                    - BearerAuth: []
+               summary: Get user profile
+               tags:
+                    - users
+          put:
+               consumes:
+                    - application/json
+               description: Update current user profile
+               parameters:
+                    - description: Update User Request
+                      in: body
+                      name: request
+                      required: true
+                      schema:
+                           $ref: "#/definitions/dto.UpdateUserRequest"
+               produces:
+                    - application/json
+               responses:
+                    "200":
+                         description: OK
+                         schema:
+                              allOf:
+                                   - $ref: "#/definitions/response.Response"
+                                   - properties:
+                                          data:
+                                               $ref: "#/definitions/dto.UserResponse"
+                                     type: object
+                    "400":
+                         description: Bad Request
+                         schema:
+                              $ref: "#/definitions/response.Response"
+                    "401":
+                         description: Unauthorized
+                         schema:
+                              $ref: "#/definitions/response.Response"
+               security:
+                    - BearerAuth: []
+               summary: Update user profile
+               tags:
+                    - users
 securityDefinitions:
-  BearerAuth:
-    description: Type "Bearer" followed by a space and JWT token.
-    in: header
-    name: Authorization
-    type: apiKey
+     BearerAuth:
+          description: Type "Bearer" followed by a space and JWT token.
+          in: header
+          name: Authorization
+          type: apiKey
 swagger: "2.0"
