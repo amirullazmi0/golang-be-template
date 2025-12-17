@@ -1,0 +1,33 @@
+package handler
+
+import (
+	"github.com/amirullazmi0/kratify-backend/config"
+	"github.com/amirullazmi0/kratify-backend/internal/middleware"
+
+	"github.com/gin-gonic/gin"
+)
+
+// SetupRoutes configures all application routes
+func SetupRoutes(router *gin.Engine, userHandler *UserHandler, cfg *config.Config) {
+	// API routes
+	api := router.Group("/api")
+	{
+		// Auth routes (public)
+		auth := api.Group("/auth")
+		{
+			auth.POST("/register", userHandler.Register)
+			auth.POST("/login", userHandler.Login)
+		}
+
+		// User routes (protected)
+		users := api.Group("/users")
+		users.Use(middleware.JWTAuth(&cfg.JWT))
+		{
+			users.GET("/profile", userHandler.GetProfile)
+			users.PUT("/profile", userHandler.UpdateProfile)
+			users.PUT("/change-password", userHandler.ChangePassword)
+			users.GET("", userHandler.GetAllUsers)
+			users.DELETE("/:id", userHandler.DeleteUser)
+		}
+	}
+}

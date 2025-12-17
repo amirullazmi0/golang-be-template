@@ -1,0 +1,28 @@
+{
+     "name": "kratify-backend",
+     "version": "1.0.0",
+     "description": "Production-ready Gin backend with clean architecture pattern.",
+     "main": "index.js",
+     "directories": {
+          "doc": "docs"
+     },
+     "scripts": {
+          "migrate:dev": "prisma migrate dev",
+          "migrate:deploy": "prisma migrate deploy",
+          "migrate:reset": "prisma migrate reset",
+          "db:push": "prisma db push",
+          "db:pull": "prisma db pull",
+          "studio": "prisma studio"
+     },
+     "keywords": [],
+     "author": "",
+     "license": "ISC",
+     "type": "commonjs",
+     "devDependencies": {
+          "prisma": "^7.1.0"
+     },
+     "dependencies": {
+          "@prisma/client": "^7.1.0",
+          "dotenv": "^17.2.3"
+     }
+}
