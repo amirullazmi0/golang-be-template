@@ -8,7 +8,7 @@ import (
 )
 
 // SetupRoutes configures all application routes
-func SetupRoutes(router *gin.Engine, userHandler *UserHandler, cfg *config.Config) {
+func SetupRoutes(router *gin.Engine, userHandler *UserHandler, addressHandler *AddressHandler, cfg *config.Config) {
 	// API routes
 	api := router.Group("/api")
 	{
@@ -30,6 +30,17 @@ func SetupRoutes(router *gin.Engine, userHandler *UserHandler, cfg *config.Confi
 			users.PUT("/change-password", userHandler.ChangePassword)
 			users.GET("", userHandler.GetAllUsers)
 			users.DELETE("/:id", userHandler.DeleteUser)
+		}
+
+		// address
+		addresses := api.Group("/addresses")
+		addresses.Use(middleware.JWTAuth(&cfg.JWT))
+		{
+			addresses.GET("", addressHandler.GetAddressByAuth)
+			addresses.POST("", addressHandler.CreateAddress)
+			addresses.GET("/:id", addressHandler.GetAddressByID)
+			addresses.PUT("/:id", addressHandler.UpdateAddress)
+			addresses.DELETE("/:id", addressHandler.DeleteAddress)
 		}
 	}
 }

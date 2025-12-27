@@ -58,9 +58,12 @@ func main() {
 
 	// Initialize usecases
 	userUsecase := usecase.NewUserUsecase(userRepo, &cfg.JWT)
-
-	// Initialize handlers
 	userHandler := handler.NewUserHandler(userUsecase)
+
+	// Initialize address usecase
+	addressRepo := repository.NewAddressRepository(db.DB)
+	addressUsecase := usecase.NewAddressUsecase(addressRepo, &cfg.JWT)
+	addressHandler := handler.NewAddressHandler(addressUsecase)
 
 	// Setup Gin
 	if !cfg.App.Debug {
@@ -91,7 +94,7 @@ func main() {
 	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
 	// Setup routes
-	handler.SetupRoutes(router, userHandler, cfg)
+	handler.SetupRoutes(router, userHandler, addressHandler, cfg)
 
 	// Setup HTTP server
 	srv := &http.Server{
