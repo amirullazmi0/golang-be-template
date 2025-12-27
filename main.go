@@ -16,6 +16,7 @@ import (
 	"github.com/amirullazmi0/kratify-backend/internal/repository"
 	"github.com/amirullazmi0/kratify-backend/internal/usecase"
 	"github.com/amirullazmi0/kratify-backend/pkg/database"
+	"github.com/amirullazmi0/kratify-backend/pkg/email"
 	"github.com/amirullazmi0/kratify-backend/pkg/logger"
 	"github.com/amirullazmi0/kratify-backend/pkg/validator"
 
@@ -56,8 +57,19 @@ func main() {
 	// Initialize repositories
 	userRepo := repository.NewUserRepository(db.DB)
 
+	// Initialize email service
+	emailService := email.NewEmailService(&cfg.SMTP)
+	
+	// Debug SMTP config
+	logger.Info("SMTP Configuration loaded",
+		zap.String("host", cfg.SMTP.Host),
+		zap.Int("port", cfg.SMTP.Port),
+		zap.String("email", cfg.SMTP.Email),
+		zap.String("password_length", fmt.Sprintf("%d chars", len(cfg.SMTP.Password))),
+	)
+
 	// Initialize usecases
-	userUsecase := usecase.NewUserUsecase(userRepo, &cfg.JWT)
+	userUsecase := usecase.NewUserUsecase(userRepo, &cfg.JWT, emailService, &cfg.App)
 	userHandler := handler.NewUserHandler(userUsecase)
 
 	// Initialize address usecase

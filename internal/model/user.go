@@ -7,20 +7,22 @@ import (
 )
 
 type User struct {
-	ID           string     `json:"id"`
-	Email        string     `json:"email"`
-	Password     string     `json:"-"`
-	Name         string     `json:"name"`
-	Role         string     `json:"role"`
-	IsActive     bool       `json:"is_active"`
-	RefreshToken *string    `json:"-"`
-	TokenExpiry  *time.Time `json:"-"`
-	CreatedAt    time.Time  `json:"created_at"`
-	UpdatedAt    time.Time  `json:"updated_at"`
-	DeletedAt    *time.Time `json:"deleted_at,omitempty"`
-	CreatedBy    *string    `json:"created_by,omitempty"`
-	UpdatedBy    *string    `json:"updated_by,omitempty"`
-	DeletedBy    *string    `json:"deleted_by,omitempty"`
+	ID                  string     `json:"id"`
+	Email               string     `json:"email"`
+	Password            string     `json:"-"`
+	Name                string     `json:"name"`
+	Role                string     `json:"role"`
+	IsActive            bool       `json:"is_active"`
+	RefreshToken        *string    `json:"-"`
+	TokenExpiry         *time.Time `json:"-"`
+	VerificationToken   *string    `json:"-"`
+	VerificationExpiry  *time.Time `json:"-"`
+	CreatedAt           time.Time  `json:"created_at"`
+	UpdatedAt           time.Time  `json:"updated_at"`
+	DeletedAt           *time.Time `json:"deleted_at,omitempty"`
+	CreatedBy           *string    `json:"created_by,omitempty"`
+	UpdatedBy           *string    `json:"updated_by,omitempty"`
+	DeletedBy           *string    `json:"deleted_by,omitempty"`
 }
 
 // HashPassword hashes the user password

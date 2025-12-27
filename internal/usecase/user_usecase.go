@@ -3,6 +3,8 @@ package usecase
 import (
 	"database/sql"
 	"errors"
+	"fmt"
+	"log"
 	"time"
 
 	"github.com/amirullazmi0/kratify-backend/config"
@@ -10,10 +12,12 @@ import (
 	"github.com/amirullazmi0/kratify-backend/internal/middleware"
 	"github.com/amirullazmi0/kratify-backend/internal/model"
 	"github.com/amirullazmi0/kratify-backend/internal/repository"
+	"github.com/amirullazmi0/kratify-backend/pkg/email"
 )
 
 type UserUsecase interface {
 	Register(req *dto.RegisterRequest) (*dto.AuthResponse, error)
+	VerifyEmail(token string) error
 	Login(req *dto.LoginRequest) (*dto.AuthResponse, error)
 	RefreshToken(req *dto.RefreshTokenRequest) (*dto.AuthResponse, error)
 	Logout(userID string) error
@@ -23,17 +27,20 @@ type UserUsecase interface {
 	ChangePassword(userID string, req *dto.ChangePasswordRequest) error
 	DeleteUser(userID string) error
 }
-
 type userUsecase struct {
-	userRepo repository.UserRepository
-	jwtCfg   *config.JWTConfig
+	userRepo     repository.UserRepository
+	jwtCfg       *config.JWTConfig
+	emailService *email.EmailService
+	appConfig    *config.AppConfig
 }
 
 // NewUserUsecase creates a new user usecase
-func NewUserUsecase(userRepo repository.UserRepository, jwtCfg *config.JWTConfig) UserUsecase {
+func NewUserUsecase(userRepo repository.UserRepository, jwtCfg *config.JWTConfig, emailService *email.EmailService, appConfig *config.AppConfig) UserUsecase {
 	return &userUsecase{
-		userRepo: userRepo,
-		jwtCfg:   jwtCfg,
+		userRepo:     userRepo,
+		jwtCfg:       jwtCfg,
+		emailService: emailService,
+		appConfig:    appConfig,
 	}
 }
 
@@ -63,33 +70,57 @@ func (u *userUsecase) Register(req *dto.RegisterRequest) (*dto.AuthResponse, err
 	}
 	user.ID = userID
 
-	// Generate tokens
-	accessToken, err := middleware.GenerateToken(user.ID, user.Email, user.Role, u.jwtCfg)
+	// Generate verification token
+	verificationToken, err := email.GenerateVerificationToken()
 	if err != nil {
 		return nil, err
 	}
 
-	refreshToken, err := middleware.GenerateRefreshToken(user.ID, user.Email, user.Role, u.jwtCfg)
-	if err != nil {
+	// Save verification token (expires in 24 hours)
+	verificationExpiry := time.Now().Add(24 * time.Hour)
+	if err := u.userRepo.SaveVerificationToken(user.ID, verificationToken, verificationExpiry); err != nil {
 		return nil, err
 	}
 
-	// Save refresh token to database
-	refreshTokenExpiry := time.Now().Add(7 * 24 * time.Hour)
-	if err := u.userRepo.SaveRefreshToken(user.ID, refreshToken, refreshTokenExpiry); err != nil {
-		return nil, err
-	}
+	// Send verification email in background (goroutine)
+	go func() {
+		baseURL := fmt.Sprintf("http://localhost:%s/api", u.appConfig.Port)
+		if err := u.emailService.SendVerificationEmail(user.Email, user.Name, verificationToken, baseURL); err != nil {
+			log.Printf("Failed to send verification email to %s: %v", user.Email, err)
+		} else {
+			log.Printf("Verification email sent successfully to %s", user.Email)
+		}
+	}()
 
+	// Don't generate tokens yet - user needs to verify email first
 	return &dto.AuthResponse{
-		AccessToken:  accessToken,
-		RefreshToken: refreshToken,
-		ExpiresIn:    int64(u.jwtCfg.ExpiredHour * 3600),
+		AccessToken:  "",
+		RefreshToken: "",
+		ExpiresIn:    0,
 		User: dto.UserResponse{
 			ID:    user.ID,
 			Email: user.Email,
 			Name:  user.Name,
 		},
 	}, nil
+}
+
+func (u *userUsecase) VerifyEmail(token string) error {
+	// Find user by verification token
+	user, err := u.userRepo.FindByVerificationToken(token)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return errors.New("invalid or expired verification token")
+		}
+		return err
+	}
+
+	// Verify email
+	if err := u.userRepo.VerifyEmail(user.ID); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (u *userUsecase) Login(req *dto.LoginRequest) (*dto.AuthResponse, error) {
@@ -100,6 +131,11 @@ func (u *userUsecase) Login(req *dto.LoginRequest) (*dto.AuthResponse, error) {
 			return nil, errors.New("invalid email or password")
 		}
 		return nil, err
+	}
+
+	// Check if email is verified
+	if !user.IsActive {
+		return nil, errors.New("please verify your email first")
 	}
 
 	// Compare password

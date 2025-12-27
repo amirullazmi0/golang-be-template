@@ -50,7 +50,32 @@ func (h *UserHandler) Register(c *gin.Context) {
 		return
 	}
 
-	response.Success(c, http.StatusCreated, "User registered successfully", result)
+	response.Success(c, http.StatusCreated, "User registered successfully. Please check your email to verify your account.", result)
+}
+
+// VerifyEmail godoc
+// @Summary Verify user email
+// @Description Verify user email with token from email
+// @Tags auth
+// @Produce json
+// @Param token query string true "Verification Token"
+// @Success 200 {object} response.Response
+// @Failure 400 {object} response.Response
+// @Router /api/auth/verify-email [get]
+func (h *UserHandler) VerifyEmail(c *gin.Context) {
+	token := c.Query("token")
+	if token == "" {
+		response.Error(c, http.StatusBadRequest, "Verification token is required", nil)
+		return
+	}
+
+	err := h.userUsecase.VerifyEmail(token)
+	if err != nil {
+		response.Error(c, http.StatusBadRequest, err.Error(), nil)
+		return
+	}
+
+	response.Success(c, http.StatusOK, "Email verified successfully. You can now login.", nil)
 }
 
 // Login godoc

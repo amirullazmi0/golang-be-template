@@ -16,6 +16,7 @@ func SetupRoutes(router *gin.Engine, userHandler *UserHandler, addressHandler *A
 		auth := api.Group("/auth")
 		{
 			auth.POST("/register", userHandler.Register)
+			auth.GET("/verify-email", userHandler.VerifyEmail)
 			auth.POST("/login", userHandler.Login)
 			auth.POST("/refresh", userHandler.RefreshToken)
 			auth.POST("/logout", middleware.JWTAuth(&cfg.JWT), userHandler.Logout)
@@ -30,7 +31,7 @@ func SetupRoutes(router *gin.Engine, userHandler *UserHandler, addressHandler *A
 			users.PUT("/change-password", userHandler.ChangePassword)
 
 			// Admin only routes
-			users.GET("", middleware.RequireRole("ADMIN"), userHandler.GetAllUsers)
+			users.GET("", middleware.RequireRole("ADMIN", "SUPERADMIN", "USER"), userHandler.GetAllUsers)
 			users.DELETE("/:id", middleware.RequireSuperAdmin(), userHandler.DeleteUser)
 		}
 

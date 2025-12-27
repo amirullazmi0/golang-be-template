@@ -12,6 +12,7 @@ type Config struct {
 	Database DatabaseConfig
 	JWT      JWTConfig
 	CORS     CORSConfig
+	SMTP     SMTPConfig
 }
 
 type AppConfig struct {
@@ -38,6 +39,15 @@ type JWTConfig struct {
 
 type CORSConfig struct {
 	AllowedOrigins []string
+}
+
+type SMTPConfig struct {
+	Email    string
+	Password string
+	Host     string
+	Port     int
+	FromName string
+	FromEmail string
 }
 
 func LoadConfig() (*Config, error) {
@@ -70,6 +80,14 @@ func LoadConfig() (*Config, error) {
 		},
 		CORS: CORSConfig{
 			AllowedOrigins: strings.Split(viper.GetString("CORS_ALLOWED_ORIGINS"), ","),
+		},
+		SMTP: SMTPConfig{
+			Email:     viper.GetString("SMTP_EMAIL"),
+			Password:  viper.GetString("SMTP_PASSWORD"),
+			Host:      viper.GetString("SMTP_HOST"),
+			Port:      viper.GetInt("SMTP_PORT"),
+			FromName:  viper.GetString("SMTP_FROM_NAME"),
+			FromEmail: viper.GetString("SMTP_FROM_EMAIL"),
 		},
 	}
 
