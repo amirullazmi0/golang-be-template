@@ -15,6 +15,7 @@ import (
 type Claims struct {
 	UserID string `json:"user_id"`
 	Email  string `json:"email"`
+	Role   string `json:"role"`
 	jwt.RegisteredClaims
 }
 
@@ -59,16 +60,18 @@ func JWTAuth(cfg *config.JWTConfig) gin.HandlerFunc {
 		// Set user info to context
 		c.Set("user_id", claims.UserID)
 		c.Set("user_email", claims.Email)
+		c.Set("user_role", claims.Role)
 
 		c.Next()
 	}
 }
 
 // GenerateToken generates a new JWT token
-func GenerateToken(userID string, email string, cfg *config.JWTConfig) (string, error) {
+func GenerateToken(userID string, email string, role string, cfg *config.JWTConfig) (string, error) {
 	claims := Claims{
 		UserID: userID,
 		Email:  email,
+		Role:   role,
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Duration(cfg.ExpiredHour) * time.Hour)),
 			IssuedAt:  jwt.NewNumericDate(time.Now()),
@@ -80,10 +83,11 @@ func GenerateToken(userID string, email string, cfg *config.JWTConfig) (string, 
 }
 
 // GenerateRefreshToken generates a refresh token (longer expiry)
-func GenerateRefreshToken(userID string, email string, cfg *config.JWTConfig) (string, error) {
+func GenerateRefreshToken(userID string, email string, role string, cfg *config.JWTConfig) (string, error) {
 	claims := Claims{
 		UserID: userID,
 		Email:  email,
+		Role:   role,
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(7 * 24 * time.Hour)), // 7 days
 			IssuedAt:  jwt.NewNumericDate(time.Now()),

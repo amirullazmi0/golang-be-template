@@ -64,12 +64,12 @@ func (u *userUsecase) Register(req *dto.RegisterRequest) (*dto.AuthResponse, err
 	user.ID = userID
 
 	// Generate tokens
-	accessToken, err := middleware.GenerateToken(user.ID, user.Email, u.jwtCfg)
+	accessToken, err := middleware.GenerateToken(user.ID, user.Email, user.Role, u.jwtCfg)
 	if err != nil {
 		return nil, err
 	}
 
-	refreshToken, err := middleware.GenerateRefreshToken(user.ID, user.Email, u.jwtCfg)
+	refreshToken, err := middleware.GenerateRefreshToken(user.ID, user.Email, user.Role, u.jwtCfg)
 	if err != nil {
 		return nil, err
 	}
@@ -108,12 +108,12 @@ func (u *userUsecase) Login(req *dto.LoginRequest) (*dto.AuthResponse, error) {
 	}
 
 	// Generate tokens
-	accessToken, err := middleware.GenerateToken(user.ID, user.Email, u.jwtCfg)
+	accessToken, err := middleware.GenerateToken(user.ID, user.Email, user.Role, u.jwtCfg)
 	if err != nil {
 		return nil, err
 	}
 
-	refreshToken, err := middleware.GenerateRefreshToken(user.ID, user.Email, u.jwtCfg)
+	refreshToken, err := middleware.GenerateRefreshToken(user.ID, user.Email, user.Role, u.jwtCfg)
 	if err != nil {
 		return nil, err
 	}
@@ -241,13 +241,13 @@ func (u *userUsecase) RefreshToken(req *dto.RefreshTokenRequest) (*dto.AuthRespo
 	}
 
 	// Generate new access token
-	accessToken, err := middleware.GenerateToken(user.ID, user.Email, u.jwtCfg)
+	accessToken, err := middleware.GenerateToken(user.ID, user.Email, user.Role, u.jwtCfg)
 	if err != nil {
 		return nil, err
 	}
 
 	// Generate new refresh token
-	newRefreshToken, err := middleware.GenerateRefreshToken(user.ID, user.Email, u.jwtCfg)
+	newRefreshToken, err := middleware.GenerateRefreshToken(user.ID, user.Email, user.Role, u.jwtCfg)
 	if err != nil {
 		return nil, err
 	}

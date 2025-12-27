@@ -8,6 +8,7 @@ model User {
   email        String    @unique @db.VarChar(255)
   password     String    @db.VarChar(255)
   name         String    @db.VarChar(255)
+  role         UserRole  @default(USER)
   refreshToken String?   @map("refresh_token") @db.Text
   tokenExpiry  DateTime? @map("token_expiry")
   isActive     Boolean   @default(true) @map("is_active")
@@ -49,4 +50,10 @@ model Address {
 
   @@unique([userId, label, deletedAt, isActive])
   @@map("addresses")
+}
+
+enum UserRole {
+  SUPERADMIN
+  ADMIN
+  USER
 }

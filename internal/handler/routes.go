@@ -28,11 +28,13 @@ func SetupRoutes(router *gin.Engine, userHandler *UserHandler, addressHandler *A
 			users.GET("/profile", userHandler.GetProfile)
 			users.PUT("/profile", userHandler.UpdateProfile)
 			users.PUT("/change-password", userHandler.ChangePassword)
-			users.GET("", userHandler.GetAllUsers)
-			users.DELETE("/:id", userHandler.DeleteUser)
+
+			// Admin only routes
+			users.GET("", middleware.RequireRole("ADMIN"), userHandler.GetAllUsers)
+			users.DELETE("/:id", middleware.RequireSuperAdmin(), userHandler.DeleteUser)
 		}
 
-		// address
+		// Address routes (protected)
 		addresses := api.Group("/addresses")
 		addresses.Use(middleware.JWTAuth(&cfg.JWT))
 		{
