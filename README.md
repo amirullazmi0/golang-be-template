@@ -37,10 +37,12 @@ root-backend/
 -    ✅ **UUID**: UUID-based identifiers throughout
 -    ✅ **Audit Trail**: Auto-tracking created_by, updated_by, deleted_by
 -    ✅ **Soft Delete**: Built-in soft delete support
--    ✅ **JWT Authentication**: Access + refresh tokens
+-    ✅ **JWT Authentication**: Access + refresh tokens with role-based authorization
+-    ✅ **Email Verification**: SMTP email verification with HTML templates
+-    ✅ **User Roles**: SUPERADMIN, ADMIN, USER with middleware protection
 -    ✅ **Structured Logging**: Zap logger with request ID
 -    ✅ **Validation**: go-playground/validator with custom error formatting
--    ✅ **Middleware**: Recovery, CORS, RequestID, Logger, JWT Auth
+-    ✅ **Middleware**: Recovery, CORS, RequestID, Logger, JWT Auth, Role-based Auth
 -    ✅ **Swagger**: Auto-generated API documentation
 -    ✅ **Graceful Shutdown**: Proper server shutdown handling
 -    ✅ **Hot Reload**: Air for development (already configured)
@@ -54,6 +56,8 @@ root-backend/
 -    **Viper**: Configuration management
 -    **Zap**: Structured logging
 -    **JWT**: Token-based authentication (golang-jwt/jwt/v5)
+-    **Bcrypt**: Password hashing
+-    **SMTP**: Email sending (net/smtp)
 -    **Validator**: Request validation
 -    **Swagger**: API documentation
 -    **CORS**: Cross-origin resource sharing
@@ -87,6 +91,12 @@ DB_USER=postgres
 DB_PASSWORD=your_password
 DB_NAME=kratify_db
 JWT_SECRET=your-secret-key-change-this
+SMTP_EMAIL=your-email@gmail.com
+SMTP_PASSWORD=your-app-password
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_FROM_NAME="Your App Name"
+SMTP_FROM_EMAIL=your-email@gmail.com
 ```
 
 5. **Run Prisma migrations:**
@@ -210,15 +220,17 @@ Semua table memiliki audit trail otomatis:
 
 ## 📖 API Documentation
 
-Swagger UI tersedia di: **http://localhost:8080/swagger/index.html**
-
-### Default Schema
-
-Template ini sudah include 2 model utama:
-
 #### User Model
 
 -    UUID-based ID
+-    Email (unique) + password (bcrypt hashed)
+-    Name
+-    Role (SUPERADMIN, ADMIN, USER) - default: USER
+-    Refresh token + token expiry
+-    Verification token + verification expiry (for email verification)
+-    Is active flag (default: false - requires email verification)
+-    Full audit trail (created_by, updated_by, deleted_by)
+-    One-to-many relationship dengan Address
 -    Email (unique) + password (bcrypt hashed)
 -    Name
 -    Refresh token + token expiry
@@ -235,30 +247,41 @@ Template ini sudah include 2 model utama:
 -    Full address (text)
 -    Is primary flag (untuk set alamat utama)
 -    Is active flag
--    Full audit trail
 
 ### Available Endpoints
 
 #### Auth (Public)
 
--    `POST /api/auth/register` - Register user baru
--    `POST /api/auth/login` - Login user
+-    `POST /api/auth/register` - Register user baru (kirim email verification)
+-    `GET /api/auth/verify-email?token=xxx` - Verify email address
+-    `POST /api/auth/login` - Login user (requires verified email)
+-    `POST /api/auth/refresh` - Refresh access token
+-    `POST /api/auth/logout` - Logout user (clear refresh token)
 
 #### Users (Protected - butuh Bearer Token)
 
 -    `GET /api/users/profile` - Get current user profile
 -    `PUT /api/users/profile` - Update user profile
 -    `PUT /api/users/change-password` - Change password
--    `GET /api/users` - Get all users
--    `DELETE /api/users/:id` - Delete user
+-    `GET /api/users` - Get all users (Admin only)
+-    `DELETE /api/users/:id` - Delete user (SuperAdmin only)
 
-#### Health Check
+#### Addresses (Protected - butuh Bearer Token)
 
--    `GET /health` - Check server status
+-    `GET /api/addresses` - Get all addresses for authenticated user
 
 ## 🔐 Authentication
 
-Semua endpoint di bawah `/api/users` membutuhkan JWT token.
+### Email Verification Flow
+
+1. **Register** → User dibuat dengan `is_active = false`
+2. **Email Sent** → Verification email dikirim otomatis (background goroutine)
+3. **Verify Email** → User klik link di email → `is_active = true`
+4. **Login** → User bisa login setelah email verified
+
+### JWT Authentication
+
+Semua endpoint di bawah `/api/users` dan `/api/addresses` membutuhkan JWT token.
 
 **Token Types:**
 
@@ -271,10 +294,104 @@ Semua endpoint di bawah `/api/users` membutuhkan JWT token.
 Authorization: Bearer <your-access-token>
 ```
 
-**Cara pakai:**
+### Role-Based Authorization
 
-1. Register user baru via `/api/auth/register` → dapat access_token + refresh_token
-2. Login via `/api/auth/login` → dapat access_token + refresh_token
+**User Roles:**
+
+-    `SUPERADMIN` - Full access to all endpoints
+-    `ADMIN` - Can manage users and data
+-    `USER` - Basic user access (default)
+
+**Protected Endpoints:**
+
+-    `GET /api/users` - Requires ADMIN role
+
+## 📝 Example Request
+
+### Register (with Email Verification)
+
+```bash
+curl -X POST http://localhost:8080/api/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "user@example.com",
+    "password": "password123",
+    "name": "John Doe"
+  }'
+
+# Response: User created, check email for verification link
+# Email berisi link: http://localhost:8080/api/auth/verify-email?token=xxx
+```
+
+### Verify Email
+
+```bash
+# Klik link di email atau:
+curl -X GET "http://localhost:8080/api/auth/verify-email?token=your-verification-token"
+
+# Response: Email verified successfully. You can now login.
+```
+
+### Login
+
+```bash
+curl -X POST http://localhost:8080/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "user@example.com",
+    "password": "password123"
+  }'
+
+# Response: access_token, refresh_token, user info
+```
+
+### Refresh Token
+
+```bash
+curl -X POST http://localhost:8080/api/auth/refresh \
+  -H "Content-Type: application/json" \
+  -d '{
+    "refresh_token": "your-refresh-token"
+  }'
+
+# Response: new access_token and refresh_token
+```
+
+### Logout
+
+```bash
+curl -X POST http://localhost:8080/api/auth/logout \
+  -H "Authorization: Bearer <your-access-token>"
+
+# Response: Logged out successfully
+```
+
+### Get Profile (Protected)
+
+```bash
+curl -X GET http://localhost:8080/api/users/profile \
+  -H "Authorization: Bearer <your-token>"
+```
+
+### Create Address (Protected)
+
+````bash
+curl -X POST http://localhost:8080/api/addresses \
+  -H "Authorization: Bearer <your-token>" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "label": "Home",
+    "recipient_name": "John Doe",
+    "phone": "081234567890",
+    "province": "DKI Jakarta",
+    "city": "Jakarta Selatan",
+    "district": "Kebayoran Baru",
+    "sub_district": "Senayan",
+    "postal_code": "12190",
+    "full_address": "Jl. Sudirman No. 123",
+    "is_primary": true
+  }'
+```Login via `/api/auth/login` → dapat access_token + refresh_token
 3. Gunakan access_token di header untuk endpoint protected
 4. Jika access_token expired, gunakan refresh_token untuk get new access_token
 
@@ -290,7 +407,7 @@ curl -X POST http://localhost:8080/api/auth/register \
     "password": "password123",
     "name": "John Doe"
   }'
-```
+````
 
 ### Login
 
@@ -346,7 +463,7 @@ Template sudah include **User** dan **Address** models. Untuk add table baru:
 
 Edit `prisma/schema.prisma`:
 
-```prisma
+````prisma
 model Product {
   id          String    @id @default(uuid()) @db.Uuid
   name        String    @db.VarChar(255)
@@ -354,21 +471,25 @@ model Product {
   stock       Int       @default(0)
   isActive    Boolean   @default(true) @map("is_active")
   createdAt   DateTime  @default(now()) @map("created_at")
-  updatedAt   DateTime  @updatedAt @map("updated_at")
-  deletedAt   DateTime? @map("deleted_at")
-  createdBy   String?   @map("created_by") @db.Uuid
-  updatedBy   String?   @map("updated_by") @db.Uuid
-  deletedBy   String?   @map("deleted_by") @db.Uuid
+## 🎯 Next Steps
 
-  @@map("products")
-}
-```
-
+-    [x] Add role-based access control (RBAC) ✅
+-    [x] Add email verification ✅
+-    [x] Add refresh token system ✅
+-    [ ] Add rate limiting
+-    [ ] Add caching (Redis)
+-    [ ] Add unit tests
+-    [ ] Add Docker support
+-    [ ] Add CI/CD pipeline
+-    [ ] Add Prometheus metrics
+-    [ ] Add distributed tracing
+-    [ ] Add forgot password / reset password
+-    [ ] Add resend verification email
 Run migration:
 
 ```bash
 npx prisma migrate dev --name add_product_table
-```
+````
 
 ## 📊 Database Migration
 
