@@ -29,6 +29,26 @@ import (
 	"go.uber.org/zap"
 )
 
+// @title Kratify Backend API
+// @version 1.0
+// @description This is a backend API for Kratify application with JWT authentication and email verification
+// @termsOfService http://swagger.io/terms/
+
+// @contact.name API Support
+// @contact.url http://www.swagger.io/support
+// @contact.email support@swagger.io
+
+// @license.name MIT
+// @license.url https://opensource.org/licenses/MIT
+
+// @host localhost:8080
+// @BasePath /
+
+// @securityDefinitions.apikey BearerAuth
+// @in header
+// @name Authorization
+// @description Type "Bearer" followed by a space and JWT token.
+
 func main() {
 	// Load configuration
 	cfg, err := config.LoadConfig()
@@ -54,21 +74,11 @@ func main() {
 	}
 	defer db.Close()
 
-	// Initialize repositories
-	userRepo := repository.NewUserRepository(db.DB)
-
 	// Initialize email service
 	emailService := email.NewEmailService(&cfg.SMTP)
-	
-	// Debug SMTP config
-	logger.Info("SMTP Configuration loaded",
-		zap.String("host", cfg.SMTP.Host),
-		zap.Int("port", cfg.SMTP.Port),
-		zap.String("email", cfg.SMTP.Email),
-		zap.String("password_length", fmt.Sprintf("%d chars", len(cfg.SMTP.Password))),
-	)
 
 	// Initialize usecases
+	userRepo := repository.NewUserRepository(db.DB)
 	userUsecase := usecase.NewUserUsecase(userRepo, &cfg.JWT, emailService, &cfg.App)
 	userHandler := handler.NewUserHandler(userUsecase)
 

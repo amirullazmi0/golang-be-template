@@ -37,3 +37,34 @@ func ValidationError(c *gin.Context, errors interface{}) {
 		Error:   errors,
 	})
 }
+
+// SetAuthCookies sets access token and refresh token cookies
+func SetAuthCookies(c *gin.Context, accessToken, refreshToken string, expiresIn int64) {
+	// Set access token cookie
+	c.SetCookie(
+		"access_token", // name
+		accessToken,    // value
+		int(expiresIn), // maxAge in seconds
+		"/",            // path
+		"",             // domain (empty = current domain)
+		false,          // secure (set true in production with HTTPS)
+		true,           // httpOnly
+	)
+
+	// Set refresh token cookie - 7 days (604800 seconds)
+	c.SetCookie(
+		"refresh_token", // name
+		refreshToken,    // value
+		604800,          // maxAge in seconds (7 days)
+		"/",             // path
+		"",              // domain
+		false,           // secure
+		true,            // httpOnly
+	)
+}
+
+// ClearAuthCookies clears authentication cookies
+func ClearAuthCookies(c *gin.Context) {
+	c.SetCookie("access_token", "", -1, "/", "", false, true)
+	c.SetCookie("refresh_token", "", -1, "/", "", false, true)
+}

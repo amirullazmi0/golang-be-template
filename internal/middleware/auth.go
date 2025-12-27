@@ -22,22 +22,30 @@ type Claims struct {
 // JWTAuth middleware validates JWT token
 func JWTAuth(cfg *config.JWTConfig) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		authHeader := c.GetHeader("Authorization")
-		if authHeader == "" {
-			response.Error(c, http.StatusUnauthorized, "Authorization header required", nil)
-			c.Abort()
-			return
-		}
+		var tokenString string
 
-		// Extract token from "Bearer <token>"
-		parts := strings.SplitN(authHeader, " ", 2)
-		if len(parts) != 2 || parts[0] != "Bearer" {
-			response.Error(c, http.StatusUnauthorized, "Invalid authorization header format", nil)
-			c.Abort()
-			return
-		}
+		// Try to get token from cookie first
+		tokenString, err := c.Cookie("access_token")
+		
+		// If not found in cookie, check Authorization header
+		if err != nil || tokenString == "" {
+			authHeader := c.GetHeader("Authorization")
+			if authHeader == "" {
+				response.Error(c, http.StatusUnauthorized, "Authorization required", nil)
+				c.Abort()
+				return
+			}
 
-		tokenString := parts[1]
+			// Extract token from "Bearer <token>"
+			parts := strings.SplitN(authHeader, " ", 2)
+			if len(parts) != 2 || parts[0] != "Bearer" {
+				response.Error(c, http.StatusUnauthorized, "Invalid authorization header format", nil)
+				c.Abort()
+				return
+			}
+
+			tokenString = parts[1]
+		}
 
 		// Parse and validate token
 		token, err := jwt.ParseWithClaims(tokenString, &Claims{}, func(token *jwt.Token) (interface{}, error) {

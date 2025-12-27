@@ -1,454 +1,1068 @@
 {
-     "swagger": "2.0",
-     "info": {
-          "description": "Production-ready Gin API with clean architecture",
-          "title": "Backend API",
-          "termsOfService": "http://swagger.io/terms/",
-          "contact": {
-               "name": "API Support",
-               "url": "http://www.swagger.io/support",
-               "email": "support@swagger.io"
-          },
-          "license": {
-               "name": "MIT",
-               "url": "https://opensource.org/licenses/MIT"
-          },
-          "version": "1.0"
-     },
-     "host": "localhost:8080",
-     "basePath": "/",
-     "paths": {
-          "/api/auth/login": {
-               "post": {
-                    "description": "Login with email and password",
-                    "consumes": ["application/json"],
-                    "produces": ["application/json"],
-                    "tags": ["auth"],
-                    "summary": "Login user",
-                    "parameters": [
-                         {
-                              "description": "Login Request",
-                              "name": "request",
-                              "in": "body",
-                              "required": true,
-                              "schema": {
-                                   "$ref": "#/definitions/dto.LoginRequest"
-                              }
-                         }
-                    ],
-                    "responses": {
-                         "200": {
-                              "description": "OK",
-                              "schema": {
-                                   "allOf": [
-                                        {
-                                             "$ref": "#/definitions/response.Response"
-                                        },
-                                        {
-                                             "type": "object",
-                                             "properties": {
-                                                  "data": {
-                                                       "$ref": "#/definitions/dto.AuthResponse"
-                                                  }
-                                             }
+    "swagger": "2.0",
+    "info": {
+        "description": "This is a backend API for Kratify application with JWT authentication and email verification",
+        "title": "Kratify Backend API",
+        "termsOfService": "http://swagger.io/terms/",
+        "contact": {
+            "name": "API Support",
+            "url": "http://www.swagger.io/support",
+            "email": "support@swagger.io"
+        },
+        "license": {
+            "name": "MIT",
+            "url": "https://opensource.org/licenses/MIT"
+        },
+        "version": "1.0"
+    },
+    "host": "localhost:8080",
+    "basePath": "/",
+    "paths": {
+        "/api/addresses": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Get all addresses for authenticated user",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "addresses"
+                ],
+                "summary": "Get user addresses",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/definitions/dto.AddressResponse"
+                                            }
                                         }
-                                   ]
-                              }
-                         },
-                         "400": {
-                              "description": "Bad Request",
-                              "schema": {
-                                   "$ref": "#/definitions/response.Response"
-                              }
-                         },
-                         "401": {
-                              "description": "Unauthorized",
-                              "schema": {
-                                   "$ref": "#/definitions/response.Response"
-                              }
-                         }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
                     }
-               }
-          },
-          "/api/auth/register": {
-               "post": {
-                    "description": "Register a new user with email, password, and name",
-                    "consumes": ["application/json"],
-                    "produces": ["application/json"],
-                    "tags": ["auth"],
-                    "summary": "Register a new user",
-                    "parameters": [
-                         {
-                              "description": "Register Request",
-                              "name": "request",
-                              "in": "body",
-                              "required": true,
-                              "schema": {
-                                   "$ref": "#/definitions/dto.RegisterRequest"
-                              }
-                         }
-                    ],
-                    "responses": {
-                         "201": {
-                              "description": "Created",
-                              "schema": {
-                                   "allOf": [
-                                        {
-                                             "$ref": "#/definitions/response.Response"
-                                        },
-                                        {
-                                             "type": "object",
-                                             "properties": {
-                                                  "data": {
-                                                       "$ref": "#/definitions/dto.AuthResponse"
-                                                  }
-                                             }
+                }
+            },
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Update existing address for authenticated user",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "addresses"
+                ],
+                "summary": "Update address",
+                "parameters": [
+                    {
+                        "description": "Update Address Request",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.UpdateAddressRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/dto.AddressResponse"
                                         }
-                                   ]
-                              }
-                         },
-                         "400": {
-                              "description": "Bad Request",
-                              "schema": {
-                                   "$ref": "#/definitions/response.Response"
-                              }
-                         },
-                         "500": {
-                              "description": "Internal Server Error",
-                              "schema": {
-                                   "$ref": "#/definitions/response.Response"
-                              }
-                         }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
                     }
-               }
-          },
-          "/api/users": {
-               "get": {
-                    "security": [
-                         {
-                              "BearerAuth": []
-                         }
-                    ],
-                    "description": "Get list of all users",
-                    "produces": ["application/json"],
-                    "tags": ["users"],
-                    "summary": "Get all users",
-                    "responses": {
-                         "200": {
-                              "description": "OK",
-                              "schema": {
-                                   "allOf": [
-                                        {
-                                             "$ref": "#/definitions/response.Response"
-                                        },
-                                        {
-                                             "type": "object",
-                                             "properties": {
-                                                  "data": {
-                                                       "type": "array",
-                                                       "items": {
-                                                            "$ref": "#/definitions/dto.UserResponse"
-                                                       }
-                                                  }
-                                             }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Create a new address for authenticated user",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "addresses"
+                ],
+                "summary": "Create new address",
+                "parameters": [
+                    {
+                        "description": "Create Address Request",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.CreateAddressRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/dto.AddressResponse"
                                         }
-                                   ]
-                              }
-                         },
-                         "401": {
-                              "description": "Unauthorized",
-                              "schema": {
-                                   "$ref": "#/definitions/response.Response"
-                              }
-                         }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
                     }
-               }
-          },
-          "/api/users/change-password": {
-               "put": {
-                    "security": [
-                         {
-                              "BearerAuth": []
-                         }
-                    ],
-                    "description": "Change current user password",
-                    "consumes": ["application/json"],
-                    "produces": ["application/json"],
-                    "tags": ["users"],
-                    "summary": "Change user password",
-                    "parameters": [
-                         {
-                              "description": "Change Password Request",
-                              "name": "request",
-                              "in": "body",
-                              "required": true,
-                              "schema": {
-                                   "$ref": "#/definitions/dto.ChangePasswordRequest"
-                              }
-                         }
-                    ],
-                    "responses": {
-                         "200": {
-                              "description": "OK",
-                              "schema": {
-                                   "$ref": "#/definitions/response.Response"
-                              }
-                         },
-                         "400": {
-                              "description": "Bad Request",
-                              "schema": {
-                                   "$ref": "#/definitions/response.Response"
-                              }
-                         },
-                         "401": {
-                              "description": "Unauthorized",
-                              "schema": {
-                                   "$ref": "#/definitions/response.Response"
-                              }
-                         }
+                }
+            }
+        },
+        "/api/addresses/{address_id}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
                     }
-               }
-          },
-          "/api/users/profile": {
-               "get": {
-                    "security": [
-                         {
-                              "BearerAuth": []
-                         }
-                    ],
-                    "description": "Get current user profile",
-                    "produces": ["application/json"],
-                    "tags": ["users"],
-                    "summary": "Get user profile",
-                    "responses": {
-                         "200": {
-                              "description": "OK",
-                              "schema": {
-                                   "allOf": [
-                                        {
-                                             "$ref": "#/definitions/response.Response"
-                                        },
-                                        {
-                                             "type": "object",
-                                             "properties": {
-                                                  "data": {
-                                                       "$ref": "#/definitions/dto.UserResponse"
-                                                  }
-                                             }
+                ],
+                "description": "Get specific address by ID",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "addresses"
+                ],
+                "summary": "Get address by ID",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Address ID",
+                        "name": "address_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/dto.AddressResponse"
                                         }
-                                   ]
-                              }
-                         },
-                         "401": {
-                              "description": "Unauthorized",
-                              "schema": {
-                                   "$ref": "#/definitions/response.Response"
-                              }
-                         },
-                         "404": {
-                              "description": "Not Found",
-                              "schema": {
-                                   "$ref": "#/definitions/response.Response"
-                              }
-                         }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
                     }
-               },
-               "put": {
-                    "security": [
-                         {
-                              "BearerAuth": []
-                         }
-                    ],
-                    "description": "Update current user profile",
-                    "consumes": ["application/json"],
-                    "produces": ["application/json"],
-                    "tags": ["users"],
-                    "summary": "Update user profile",
-                    "parameters": [
-                         {
-                              "description": "Update User Request",
-                              "name": "request",
-                              "in": "body",
-                              "required": true,
-                              "schema": {
-                                   "$ref": "#/definitions/dto.UpdateUserRequest"
-                              }
-                         }
-                    ],
-                    "responses": {
-                         "200": {
-                              "description": "OK",
-                              "schema": {
-                                   "allOf": [
-                                        {
-                                             "$ref": "#/definitions/response.Response"
-                                        },
-                                        {
-                                             "type": "object",
-                                             "properties": {
-                                                  "data": {
-                                                       "$ref": "#/definitions/dto.UserResponse"
-                                                  }
-                                             }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Delete address by ID",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "addresses"
+                ],
+                "summary": "Delete address",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Address ID",
+                        "name": "address_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/auth/login": {
+            "post": {
+                "description": "Login with email and password",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "auth"
+                ],
+                "summary": "Login user",
+                "parameters": [
+                    {
+                        "description": "Login Request",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.LoginRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/dto.AuthResponse"
                                         }
-                                   ]
-                              }
-                         },
-                         "400": {
-                              "description": "Bad Request",
-                              "schema": {
-                                   "$ref": "#/definitions/response.Response"
-                              }
-                         },
-                         "401": {
-                              "description": "Unauthorized",
-                              "schema": {
-                                   "$ref": "#/definitions/response.Response"
-                              }
-                         }
-                    }
-               }
-          },
-          "/api/users/{id}": {
-               "delete": {
-                    "security": [
-                         {
-                              "BearerAuth": []
-                         }
-                    ],
-                    "description": "Delete a user by ID",
-                    "produces": ["application/json"],
-                    "tags": ["users"],
-                    "summary": "Delete user",
-                    "parameters": [
-                         {
-                              "type": "integer",
-                              "description": "User ID",
-                              "name": "id",
-                              "in": "path",
-                              "required": true
-                         }
-                    ],
-                    "responses": {
-                         "200": {
-                              "description": "OK",
-                              "schema": {
-                                   "$ref": "#/definitions/response.Response"
-                              }
-                         },
-                         "400": {
-                              "description": "Bad Request",
-                              "schema": {
-                                   "$ref": "#/definitions/response.Response"
-                              }
-                         },
-                         "401": {
-                              "description": "Unauthorized",
-                              "schema": {
-                                   "$ref": "#/definitions/response.Response"
-                              }
-                         }
-                    }
-               }
-          }
-     },
-     "definitions": {
-          "dto.AuthResponse": {
-               "type": "object",
-               "properties": {
-                    "token": {
-                         "type": "string"
+                                    }
+                                }
+                            ]
+                        }
                     },
-                    "user": {
-                         "$ref": "#/definitions/dto.UserResponse"
-                    }
-               }
-          },
-          "dto.ChangePasswordRequest": {
-               "type": "object",
-               "required": ["new_password", "old_password"],
-               "properties": {
-                    "new_password": {
-                         "type": "string",
-                         "minLength": 6
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
                     },
-                    "old_password": {
-                         "type": "string"
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
                     }
-               }
-          },
-          "dto.LoginRequest": {
-               "type": "object",
-               "required": ["email", "password"],
-               "properties": {
-                    "email": {
-                         "type": "string"
-                    },
-                    "password": {
-                         "type": "string"
+                }
+            }
+        },
+        "/api/auth/logout": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
                     }
-               }
-          },
-          "dto.RegisterRequest": {
-               "type": "object",
-               "required": ["email", "name", "password"],
-               "properties": {
-                    "email": {
-                         "type": "string"
+                ],
+                "description": "Logout and invalidate refresh token",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "auth"
+                ],
+                "summary": "Logout user",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
                     },
-                    "name": {
-                         "type": "string",
-                         "minLength": 2
-                    },
-                    "password": {
-                         "type": "string",
-                         "minLength": 6
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
                     }
-               }
-          },
-          "dto.UpdateUserRequest": {
-               "type": "object",
-               "properties": {
-                    "name": {
-                         "type": "string",
-                         "minLength": 2
+                }
+            }
+        },
+        "/api/auth/refresh": {
+            "post": {
+                "description": "Get new access token using refresh token",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "auth"
+                ],
+                "summary": "Refresh access token",
+                "parameters": [
+                    {
+                        "description": "Refresh Token Request",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.RefreshTokenRequest"
+                        }
                     }
-               }
-          },
-          "dto.UserResponse": {
-               "type": "object",
-               "properties": {
-                    "email": {
-                         "type": "string"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/dto.AuthResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
                     },
-                    "id": {
-                         "type": "integer"
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
                     },
-                    "name": {
-                         "type": "string"
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
                     }
-               }
-          },
-          "response.Response": {
-               "type": "object",
-               "properties": {
-                    "data": {},
-                    "error": {},
-                    "message": {
-                         "type": "string"
-                    },
-                    "success": {
-                         "type": "boolean"
+                }
+            }
+        },
+        "/api/auth/register": {
+            "post": {
+                "description": "Register a new user with email, password, and name",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "auth"
+                ],
+                "summary": "Register a new user",
+                "parameters": [
+                    {
+                        "description": "Register Request",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.RegisterRequest"
+                        }
                     }
-               }
-          }
-     },
-     "securityDefinitions": {
-          "BearerAuth": {
-               "description": "Type \"Bearer\" followed by a space and JWT token.",
-               "type": "apiKey",
-               "name": "Authorization",
-               "in": "header"
-          }
-     }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/dto.AuthResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/auth/verify-email": {
+            "get": {
+                "description": "Verify user email with token from email",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "auth"
+                ],
+                "summary": "Verify user email",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Verification Token",
+                        "name": "token",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/users": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Get list of all users",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "users"
+                ],
+                "summary": "Get all users",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/definitions/dto.UserResponse"
+                                            }
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/users/change-password": {
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Change current user password",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "users"
+                ],
+                "summary": "Change user password",
+                "parameters": [
+                    {
+                        "description": "Change Password Request",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.ChangePasswordRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/users/profile": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Get current user profile",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "users"
+                ],
+                "summary": "Get user profile",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/dto.UserResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            },
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Update current user profile",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "users"
+                ],
+                "summary": "Update user profile",
+                "parameters": [
+                    {
+                        "description": "Update User Request",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.UpdateUserRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/dto.UserResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/users/{id}": {
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Delete a user by ID",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "users"
+                ],
+                "summary": "Delete user",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "User ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "dto.AddressResponse": {
+            "type": "object",
+            "properties": {
+                "city": {
+                    "type": "string"
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "district": {
+                    "type": "string"
+                },
+                "full_address": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "is_active": {
+                    "type": "boolean"
+                },
+                "is_primary": {
+                    "type": "boolean"
+                },
+                "label": {
+                    "type": "string"
+                },
+                "phone": {
+                    "type": "string"
+                },
+                "postal_code": {
+                    "type": "string"
+                },
+                "province": {
+                    "type": "string"
+                },
+                "recipient_name": {
+                    "type": "string"
+                },
+                "sub_district": {
+                    "type": "string"
+                },
+                "updated_at": {
+                    "type": "string"
+                },
+                "user_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "dto.AuthResponse": {
+            "type": "object",
+            "properties": {
+                "access_token": {
+                    "type": "string"
+                },
+                "expires_in": {
+                    "description": "seconds",
+                    "type": "integer"
+                },
+                "refresh_token": {
+                    "type": "string"
+                },
+                "user": {
+                    "$ref": "#/definitions/dto.UserResponse"
+                }
+            }
+        },
+        "dto.ChangePasswordRequest": {
+            "type": "object",
+            "required": [
+                "new_password",
+                "old_password"
+            ],
+            "properties": {
+                "new_password": {
+                    "type": "string",
+                    "minLength": 6
+                },
+                "old_password": {
+                    "type": "string"
+                }
+            }
+        },
+        "dto.CreateAddressRequest": {
+            "type": "object",
+            "required": [
+                "city",
+                "district",
+                "full_address",
+                "label",
+                "phone",
+                "postal_code",
+                "province",
+                "recipient_name",
+                "sub_district"
+            ],
+            "properties": {
+                "city": {
+                    "type": "string",
+                    "maxLength": 100
+                },
+                "district": {
+                    "type": "string",
+                    "maxLength": 100
+                },
+                "full_address": {
+                    "type": "string"
+                },
+                "is_primary": {
+                    "type": "boolean"
+                },
+                "label": {
+                    "type": "string",
+                    "maxLength": 100
+                },
+                "phone": {
+                    "type": "string",
+                    "maxLength": 20
+                },
+                "postal_code": {
+                    "type": "string",
+                    "maxLength": 10
+                },
+                "province": {
+                    "type": "string",
+                    "maxLength": 100
+                },
+                "recipient_name": {
+                    "type": "string",
+                    "maxLength": 255
+                },
+                "sub_district": {
+                    "type": "string",
+                    "maxLength": 100
+                }
+            }
+        },
+        "dto.LoginRequest": {
+            "type": "object",
+            "required": [
+                "email",
+                "password"
+            ],
+            "properties": {
+                "email": {
+                    "type": "string"
+                },
+                "password": {
+                    "type": "string"
+                }
+            }
+        },
+        "dto.RefreshTokenRequest": {
+            "type": "object",
+            "required": [
+                "refresh_token"
+            ],
+            "properties": {
+                "refresh_token": {
+                    "type": "string"
+                }
+            }
+        },
+        "dto.RegisterRequest": {
+            "type": "object",
+            "required": [
+                "email",
+                "name",
+                "password"
+            ],
+            "properties": {
+                "email": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string",
+                    "minLength": 2
+                },
+                "password": {
+                    "type": "string",
+                    "minLength": 6
+                }
+            }
+        },
+        "dto.UpdateAddressRequest": {
+            "type": "object",
+            "properties": {
+                "city": {
+                    "type": "string",
+                    "maxLength": 100
+                },
+                "district": {
+                    "type": "string",
+                    "maxLength": 100
+                },
+                "full_address": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "is_primary": {
+                    "type": "boolean"
+                },
+                "label": {
+                    "type": "string",
+                    "maxLength": 100
+                },
+                "phone": {
+                    "type": "string",
+                    "maxLength": 20
+                },
+                "postal_code": {
+                    "type": "string",
+                    "maxLength": 10
+                },
+                "province": {
+                    "type": "string",
+                    "maxLength": 100
+                },
+                "recipient_name": {
+                    "type": "string",
+                    "maxLength": 255
+                },
+                "sub_district": {
+                    "type": "string",
+                    "maxLength": 100
+                }
+            }
+        },
+        "dto.UpdateUserRequest": {
+            "type": "object",
+            "properties": {
+                "name": {
+                    "type": "string",
+                    "minLength": 2
+                }
+            }
+        },
+        "dto.UserResponse": {
+            "type": "object",
+            "properties": {
+                "email": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
+        "response.Response": {
+            "type": "object",
+            "properties": {
+                "data": {},
+                "error": {},
+                "message": {
+                    "type": "string"
+                },
+                "success": {
+                    "type": "boolean"
+                }
+            }
+        }
+    },
+    "securityDefinitions": {
+        "BearerAuth": {
+            "description": "Type \"Bearer\" followed by a space and JWT token.",
+            "type": "apiKey",
+            "name": "Authorization",
+            "in": "header"
+        }
+    }
 }

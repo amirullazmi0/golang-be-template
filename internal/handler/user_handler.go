@@ -50,6 +50,9 @@ func (h *UserHandler) Register(c *gin.Context) {
 		return
 	}
 
+	// Set authentication cookies
+	response.SetAuthCookies(c, result.AccessToken, result.RefreshToken, result.ExpiresIn)
+
 	response.Success(c, http.StatusCreated, "User registered successfully. Please check your email to verify your account.", result)
 }
 
@@ -107,6 +110,9 @@ func (h *UserHandler) Login(c *gin.Context) {
 		response.Error(c, http.StatusUnauthorized, err.Error(), nil)
 		return
 	}
+
+	// Set authentication cookies
+	response.SetAuthCookies(c, result.AccessToken, result.RefreshToken, result.ExpiresIn)
 
 	response.Success(c, http.StatusOK, "Login successful", result)
 }
@@ -275,6 +281,9 @@ func (h *UserHandler) RefreshToken(c *gin.Context) {
 		return
 	}
 
+	// Set authentication cookies
+	response.SetAuthCookies(c, result.AccessToken, result.RefreshToken, result.ExpiresIn)
+
 	response.Success(c, http.StatusOK, "Token refreshed successfully", result)
 }
 
@@ -294,6 +303,9 @@ func (h *UserHandler) Logout(c *gin.Context) {
 		response.Error(c, http.StatusBadRequest, err.Error(), nil)
 		return
 	}
+
+	// Clear authentication cookies
+	response.ClearAuthCookies(c)
 
 	response.Success(c, http.StatusOK, "Logged out successfully", nil)
 }
