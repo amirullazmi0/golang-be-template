@@ -11,6 +11,7 @@ type User struct {
 	Email        string     `json:"email"`
 	Password     string     `json:"-"`
 	Name         string     `json:"name"`
+	IsActive     bool       `json:"is_active"`
 	RefreshToken *string    `json:"-"`
 	TokenExpiry  *time.Time `json:"-"`
 	CreatedAt    time.Time  `json:"created_at"`

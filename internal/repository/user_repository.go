@@ -12,8 +12,11 @@ type UserRepository interface {
 	Create(user *model.User) (string, error)
 	FindByID(id string) (*model.User, error)
 	FindByEmail(email string) (*model.User, error)
+	FindByRefreshToken(refreshToken string) (*model.User, error)
 	FindAll() ([]model.User, error)
 	Update(user *model.User) error
+	SaveRefreshToken(userID string, refreshToken string, expiresAt time.Time) error
+	ClearRefreshToken(userID string) error
 	Delete(id string) error
 }
 
@@ -31,9 +34,8 @@ func (r *userRepository) Create(user *model.User) (string, error) {
 		Set("email", user.Email).
 		Set("password", user.Password).
 		Set("name", user.Name).
-		Set("is_active", true).
 		Execute(r.db)
-	
+
 	return id, err
 }
 
@@ -52,6 +54,7 @@ func (r *userRepository) FindByID(id string) (*model.User, error) {
 		&user.Name,
 		&user.RefreshToken,
 		&user.TokenExpiry,
+		&user.IsActive,
 		&user.CreatedAt,
 		&user.UpdatedAt,
 		&user.DeletedAt,
@@ -85,6 +88,7 @@ func (r *userRepository) FindByEmail(email string) (*model.User, error) {
 		&user.Name,
 		&user.RefreshToken,
 		&user.TokenExpiry,
+		&user.IsActive,
 		&user.CreatedAt,
 		&user.UpdatedAt,
 		&user.DeletedAt,
@@ -125,6 +129,7 @@ func (r *userRepository) FindAll() ([]model.User, error) {
 			&user.Name,
 			&user.RefreshToken,
 			&user.TokenExpiry,
+			&user.IsActive,
 			&user.CreatedAt,
 			&user.UpdatedAt,
 			&user.DeletedAt,
@@ -148,7 +153,7 @@ func (r *userRepository) Update(user *model.User) error {
 		Set("updated_at", time.Now()).
 		Where("id = $1", user.ID).
 		Execute(r.db)
-	
+
 	return err
 }
 
@@ -159,6 +164,63 @@ func (r *userRepository) Delete(id string) error {
 		Set("updated_at", time.Now()).
 		Where("id = $1", id).
 		Execute(r.db)
-	
+
 	return err
+}
+
+func (r *userRepository) SaveRefreshToken(userID string, refreshToken string, expiresAt time.Time) error {
+	_, err := database.NewUpdateBuilder("users").
+		Set("refresh_token", refreshToken).
+		Set("token_expiry", expiresAt).
+		Set("updated_at", time.Now()).
+		Where("id = $1", userID).
+		Execute(r.db)
+
+	return err
+}
+
+func (r *userRepository) ClearRefreshToken(userID string) error {
+	_, err := database.NewUpdateBuilder("users").
+		Set("refresh_token", nil).
+		Set("token_expiry", nil).
+		Set("updated_at", time.Now()).
+		Where("id = $1", userID).
+		Execute(r.db)
+
+	return err
+}
+
+func (r *userRepository) FindByRefreshToken(refreshToken string) (*model.User, error) {
+	query, args := database.NewQueryBuilder("users").
+		Where("refresh_token = $1", refreshToken).
+		Where("deleted_at IS NULL").
+		Where("token_expiry > $2", time.Now()).
+		Limit(1).
+		Build()
+
+	var user model.User
+	err := r.db.QueryRow(query, args...).Scan(
+		&user.ID,
+		&user.Email,
+		&user.Password,
+		&user.Name,
+		&user.RefreshToken,
+		&user.TokenExpiry,
+		&user.IsActive,
+		&user.CreatedAt,
+		&user.UpdatedAt,
+		&user.DeletedAt,
+		&user.CreatedBy,
+		&user.UpdatedBy,
+		&user.DeletedBy,
+	)
+
+	if err == sql.ErrNoRows {
+		return nil, sql.ErrNoRows
+	}
+	if err != nil {
+		return nil, err
+	}
+
+	return &user, nil
 }

@@ -3,6 +3,7 @@ package usecase
 import (
 	"database/sql"
 	"errors"
+	"time"
 
 	"github.com/amirullazmi0/kratify-backend/config"
 	"github.com/amirullazmi0/kratify-backend/internal/dto"
@@ -14,6 +15,8 @@ import (
 type UserUsecase interface {
 	Register(req *dto.RegisterRequest) (*dto.AuthResponse, error)
 	Login(req *dto.LoginRequest) (*dto.AuthResponse, error)
+	RefreshToken(req *dto.RefreshTokenRequest) (*dto.AuthResponse, error)
+	Logout(userID string) error
 	GetProfile(userID string) (*dto.UserResponse, error)
 	GetAllUsers() ([]dto.UserResponse, error)
 	UpdateProfile(userID string, req *dto.UpdateUserRequest) (*dto.UserResponse, error)
@@ -71,6 +74,12 @@ func (u *userUsecase) Register(req *dto.RegisterRequest) (*dto.AuthResponse, err
 		return nil, err
 	}
 
+	// Save refresh token to database
+	refreshTokenExpiry := time.Now().Add(7 * 24 * time.Hour)
+	if err := u.userRepo.SaveRefreshToken(user.ID, refreshToken, refreshTokenExpiry); err != nil {
+		return nil, err
+	}
+
 	return &dto.AuthResponse{
 		AccessToken:  accessToken,
 		RefreshToken: refreshToken,
@@ -106,6 +115,12 @@ func (u *userUsecase) Login(req *dto.LoginRequest) (*dto.AuthResponse, error) {
 
 	refreshToken, err := middleware.GenerateRefreshToken(user.ID, user.Email, u.jwtCfg)
 	if err != nil {
+		return nil, err
+	}
+
+	// Save refresh token to database
+	refreshTokenExpiry := time.Now().Add(7 * 24 * time.Hour)
+	if err := u.userRepo.SaveRefreshToken(user.ID, refreshToken, refreshTokenExpiry); err != nil {
 		return nil, err
 	}
 
@@ -213,4 +228,58 @@ func (u *userUsecase) DeleteUser(userID string) error {
 	}
 
 	return u.userRepo.Delete(userID)
+}
+
+func (u *userUsecase) RefreshToken(req *dto.RefreshTokenRequest) (*dto.AuthResponse, error) {
+	// Find user by refresh token
+	user, err := u.userRepo.FindByRefreshToken(req.RefreshToken)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, errors.New("invalid or expired refresh token")
+		}
+		return nil, err
+	}
+
+	// Generate new access token
+	accessToken, err := middleware.GenerateToken(user.ID, user.Email, u.jwtCfg)
+	if err != nil {
+		return nil, err
+	}
+
+	// Generate new refresh token
+	newRefreshToken, err := middleware.GenerateRefreshToken(user.ID, user.Email, u.jwtCfg)
+	if err != nil {
+		return nil, err
+	}
+
+	// Update refresh token in database
+	refreshTokenExpiry := time.Now().Add(7 * 24 * time.Hour)
+	if err := u.userRepo.SaveRefreshToken(user.ID, newRefreshToken, refreshTokenExpiry); err != nil {
+		return nil, err
+	}
+
+	return &dto.AuthResponse{
+		AccessToken:  accessToken,
+		RefreshToken: newRefreshToken,
+		ExpiresIn:    int64(u.jwtCfg.ExpiredHour * 3600),
+		User: dto.UserResponse{
+			ID:    user.ID,
+			Email: user.Email,
+			Name:  user.Name,
+		},
+	}, nil
+}
+
+func (u *userUsecase) Logout(userID string) error {
+	// Verify user exists
+	_, err := u.userRepo.FindByID(userID)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return errors.New("user not found")
+		}
+		return err
+	}
+
+	// Clear refresh token
+	return u.userRepo.ClearRefreshToken(userID)
 }

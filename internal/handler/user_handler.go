@@ -219,3 +219,56 @@ func (h *UserHandler) DeleteUser(c *gin.Context) {
 
 	response.Success(c, http.StatusOK, "User deleted successfully", nil)
 }
+
+// RefreshToken godoc
+// @Summary Refresh access token
+// @Description Get new access token using refresh token
+// @Tags auth
+// @Accept json
+// @Produce json
+// @Param request body dto.RefreshTokenRequest true "Refresh Token Request"
+// @Success 200 {object} response.Response{data=dto.AuthResponse}
+// @Failure 400 {object} response.Response
+// @Failure 401 {object} response.Response
+// @Router /api/auth/refresh [post]
+func (h *UserHandler) RefreshToken(c *gin.Context) {
+	var req dto.RefreshTokenRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.Error(c, http.StatusBadRequest, "Invalid request body", err.Error())
+		return
+	}
+
+	// Validate request
+	if err := validator.Validate(&req); err != nil {
+		response.ValidationError(c, validator.FormatValidationErrors(err))
+		return
+	}
+
+	result, err := h.userUsecase.RefreshToken(&req)
+	if err != nil {
+		response.Error(c, http.StatusUnauthorized, err.Error(), nil)
+		return
+	}
+
+	response.Success(c, http.StatusOK, "Token refreshed successfully", result)
+}
+
+// Logout godoc
+// @Summary Logout user
+// @Description Logout and invalidate refresh token
+// @Tags auth
+// @Produce json
+// @Security BearerAuth
+// @Success 200 {object} response.Response
+// @Failure 401 {object} response.Response
+// @Router /api/auth/logout [post]
+func (h *UserHandler) Logout(c *gin.Context) {
+	userID := c.GetString("user_id")
+
+	if err := h.userUsecase.Logout(userID); err != nil {
+		response.Error(c, http.StatusBadRequest, err.Error(), nil)
+		return
+	}
+
+	response.Success(c, http.StatusOK, "Logged out successfully", nil)
+}

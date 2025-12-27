@@ -24,6 +24,11 @@ type ChangePasswordRequest struct {
 	NewPassword string `json:"new_password" validate:"required,min=6"`
 }
 
+// RefreshTokenRequest represents refresh token request
+type RefreshTokenRequest struct {
+	RefreshToken string `json:"refresh_token" validate:"required"`
+}
+
 // UserResponse represents user response
 type UserResponse struct {
 	ID    string `json:"id"`

@@ -17,6 +17,8 @@ func SetupRoutes(router *gin.Engine, userHandler *UserHandler, cfg *config.Confi
 		{
 			auth.POST("/register", userHandler.Register)
 			auth.POST("/login", userHandler.Login)
+			auth.POST("/refresh", userHandler.RefreshToken)
+			auth.POST("/logout", middleware.JWTAuth(&cfg.JWT), userHandler.Logout)
 		}
 
 		// User routes (protected)
