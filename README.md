@@ -1,11 +1,11 @@
-# Kratify Backend
+# Golang Backend
 
 Production-ready Gin backend with clean architecture, Prisma migrations, and custom query builder.
 
 ## 📁 Project Structure
 
 ```
-kratify-backend/
+golang-backend/
 ├── config/                    # Configuration
 │   └── config.go             # Viper config loader with logger config
 ├── internal/
@@ -130,7 +130,7 @@ cp .env.example .env
 
 ```env
 # Server Configuration
-APP_NAME=Kratify Backend
+APP_NAME=golang Backend
 APP_ENV=development
 APP_PORT=8080
 APP_DEBUG=true
@@ -140,7 +140,7 @@ DB_HOST=localhost
 DB_PORT=5432
 DB_USER=postgres
 DB_PASSWORD=your_password
-DB_NAME=kratify_db
+DB_NAME=golang_db
 DB_SSL_MODE=disable
 DB_TIMEZONE=Asia/Jakarta
 
@@ -156,7 +156,7 @@ SMTP_EMAIL=your-email@gmail.com
 SMTP_PASSWORD=your-app-password
 SMTP_HOST=smtp.gmail.com
 SMTP_PORT=587
-SMTP_FROM_NAME="Kratify Backend"
+SMTP_FROM_NAME="golang Backend"
 SMTP_FROM_EMAIL=your-email@gmail.com
 
 # Logger Configuration
@@ -562,15 +562,15 @@ docker-compose up -d
    - Pilih **Loki** sebagai data source
    - Query contoh:
      ```logql
-     {job="kratify-backend"}
+     {job="golang-backend"}
      ```
    - Filter by level:
      ```logql
-     {job="kratify-backend", level="error"}
+     {job="golang-backend", level="error"}
      ```
    - Search by message:
      ```logql
-     {job="kratify-backend"} |= "HTTP Request"
+     {job="golang-backend"} |= "HTTP Request"
      ```
 
 ### Log Format
@@ -619,22 +619,22 @@ LOG_COMPRESS=true      # compress rotated logs
 
 **1. Semua HTTP errors (4xx & 5xx):**
 ```logql
-{job="kratify-backend"} | json | status >= 400
+{job="golang-backend"} | json | status >= 400
 ```
 
 **2. Slow requests (>1 second):**
 ```logql
-{job="kratify-backend"} | json | latency_ms > 1000
+{job="golang-backend"} | json | latency_ms > 1000
 ```
 
 **3. Requests per endpoint:**
 ```logql
-sum by (path) (count_over_time({job="kratify-backend"}[5m]))
+sum by (path) (count_over_time({job="golang-backend"}[5m]))
 ```
 
 **4. Error rate:**
 ```logql
-sum(rate({job="kratify-backend", level="error"}[5m]))
+sum(rate({job="golang-backend", level="error"}[5m]))
 ```
 
 ### Stop Monitoring Stack
