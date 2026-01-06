@@ -98,17 +98,53 @@ golang-backend/
 
 ## 📦 Dependencies
 
--    **Gin**: HTTP web framework
--    **Prisma**: Schema management & migrations
+### Core Framework & Libraries
+
+-    **Gin** (`github.com/gin-gonic/gin`): HTTP web framework
+-    **Viper** (`github.com/spf13/viper`): Configuration management from .env
 -    **database/sql + lib/pq**: PostgreSQL driver
--    **Viper**: Configuration management
--    **Zap**: Structured logging
--    **JWT**: Token-based authentication (golang-jwt/jwt/v5)
--    **Bcrypt**: Password hashing
--    **SMTP**: Email sending (net/smtp)
--    **Validator**: Request validation
--    **Swagger**: API documentation
--    **CORS**: Cross-origin resource sharing
+
+### Authentication & Security
+
+-    **JWT** (`github.com/golang-jwt/jwt/v5`): Token-based authentication
+-    **Bcrypt** (`golang.org/x/crypto`): Password hashing
+
+### Database & ORM
+
+-    **Prisma**: Schema management & migrations (Node.js)
+-    **Custom Query Builder**: Fluent SQL builder with audit trail support
+
+### Logging & Monitoring
+
+-    **Zap** (`go.uber.org/zap`): High-performance structured logging with JSON format
+-    **Grafana Loki**: Log aggregation system (Docker)
+-    **Promtail**: Log collector & shipper to Loki (Docker)
+-    **Grafana**: Metrics visualization & log exploration (Docker)
+
+### Validation & Response
+
+-    **Validator** (`github.com/go-playground/validator/v10`): Request validation
+-    **Standard Response**: Consistent JSON response wrapper
+
+### Middleware
+
+-    **CORS** (`github.com/gin-contrib/cors`): Cross-origin resource sharing
+-    **RequestID** (`github.com/gin-contrib/requestid`): Request tracking
+-    **Custom Middleware**: Recovery, Logger, JWT Auth, Role-based Auth
+
+### Email & Communication
+
+-    **SMTP** (`net/smtp`): Email sending with HTML templates
+
+### Documentation
+
+-    **Swagger** (`github.com/swaggo/swag`): Auto-generated API documentation
+-    **Gin Swagger** (`github.com/swaggo/gin-swagger`): Swagger UI integration
+
+### Development Tools
+
+-    **Air**: Hot reload for development
+-    **godotenv** (`github.com/joho/godotenv`): Load .env files
 
 ## ⚙️ Setup
 
