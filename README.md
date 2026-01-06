@@ -84,13 +84,17 @@ golang-backend/
 -    ✅ **JWT Authentication**: Access + refresh tokens with role-based authorization
 -    ✅ **Email Verification**: SMTP email verification with HTML templates
 -    ✅ **User Roles**: SUPERADMIN, ADMIN, USER with middleware protection
--    ✅ **Structured Logging**: Zap logger with request ID
+-    ✅ **Structured Logging**: Zap logger with JSON format & request ID tracking
+-    ✅ **Grafana Loki Integration**: Centralized logging & monitoring with real-time log aggregation
+-    ✅ **Log Management**: File rotation, compression, and retention (28 days default)
+-    ✅ **Monitoring Stack**: Pre-configured Grafana + Loki + Promtail via Docker Compose
 -    ✅ **Validation**: go-playground/validator with custom error formatting
 -    ✅ **Middleware**: Recovery, CORS, RequestID, Logger, JWT Auth, Role-based Auth
 -    ✅ **Swagger**: Auto-generated API documentation
 -    ✅ **Graceful Shutdown**: Proper server shutdown handling
 -    ✅ **Hot Reload**: Air for development (already configured)
 -    ✅ **Standard Response**: Consistent JSON response format
+-    ✅ **Production Ready**: Environment-based configuration with .env support
 
 ## 📦 Dependencies
 
