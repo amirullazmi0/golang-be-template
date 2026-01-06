@@ -21,21 +21,32 @@ type QueryBuilder struct {
 	table      string
 	columns    []string
 	where      []string
+	orWhere    [][]string // For OR conditions, each element is a group of AND conditions
 	whereArgs  []interface{}
-	orderBy    string
+	orderBy    []string
+	groupBy    []string
+	having     []string
+	havingArgs []interface{}
 	limit      int
 	offset     int
 	join       []string
+	distinct   bool
 }
 
 // NewQueryBuilder creates a new query builder
 func NewQueryBuilder(table string) *QueryBuilder {
 	return &QueryBuilder{
-		table:     table,
-		columns:   []string{"*"},
-		where:     []string{},
-		whereArgs: []interface{}{},
-		join:      []string{},
+		table:      table,
+		columns:    []string{"*"},
+		where:      []string{},
+		orWhere:    [][]string{},
+		whereArgs:  []interface{}{},
+		orderBy:    []string{},
+		groupBy:    []string{},
+		having:     []string{},
+		havingArgs: []interface{}{},
+		join:       []string{},
+		distinct:   false,
 	}
 }
 
@@ -45,10 +56,82 @@ func (qb *QueryBuilder) Select(columns ...string) *QueryBuilder {
 	return qb
 }
 
-// Where adds a WHERE condition
+// Distinct adds DISTINCT to SELECT
+func (qb *QueryBuilder) Distinct() *QueryBuilder {
+	qb.distinct = true
+	return qb
+}
+
+// Where adds a WHERE condition (AND)
 func (qb *QueryBuilder) Where(condition string, args ...interface{}) *QueryBuilder {
 	qb.where = append(qb.where, condition)
 	qb.whereArgs = append(qb.whereArgs, args...)
+	return qb
+}
+
+// WhereIn adds WHERE column IN (values)
+func (qb *QueryBuilder) WhereIn(column string, values []interface{}) *QueryBuilder {
+	if len(values) == 0 {
+		return qb
+	}
+	placeholders := make([]string, len(values))
+	for i := range values {
+		placeholders[i] = fmt.Sprintf("$%d", len(qb.whereArgs)+i+1)
+	}
+	condition := fmt.Sprintf("%s IN (%s)", column, strings.Join(placeholders, ", "))
+	qb.where = append(qb.where, condition)
+	qb.whereArgs = append(qb.whereArgs, values...)
+	return qb
+}
+
+// WhereNotIn adds WHERE column NOT IN (values)
+func (qb *QueryBuilder) WhereNotIn(column string, values []interface{}) *QueryBuilder {
+	if len(values) == 0 {
+		return qb
+	}
+	placeholders := make([]string, len(values))
+	for i := range values {
+		placeholders[i] = fmt.Sprintf("$%d", len(qb.whereArgs)+i+1)
+	}
+	condition := fmt.Sprintf("%s NOT IN (%s)", column, strings.Join(placeholders, ", "))
+	qb.where = append(qb.where, condition)
+	qb.whereArgs = append(qb.whereArgs, values...)
+	return qb
+}
+
+// WhereLike adds WHERE column LIKE pattern
+func (qb *QueryBuilder) WhereLike(column string, pattern string) *QueryBuilder {
+	condition := fmt.Sprintf("%s LIKE $%d", column, len(qb.whereArgs)+1)
+	qb.where = append(qb.where, condition)
+	qb.whereArgs = append(qb.whereArgs, pattern)
+	return qb
+}
+
+// WhereBetween adds WHERE column BETWEEN start AND end
+func (qb *QueryBuilder) WhereBetween(column string, start, end interface{}) *QueryBuilder {
+	condition := fmt.Sprintf("%s BETWEEN $%d AND $%d", column, len(qb.whereArgs)+1, len(qb.whereArgs)+2)
+	qb.where = append(qb.where, condition)
+	qb.whereArgs = append(qb.whereArgs, start, end)
+	return qb
+}
+
+// WhereNull adds WHERE column IS NULL
+func (qb *QueryBuilder) WhereNull(column string) *QueryBuilder {
+	qb.where = append(qb.where, fmt.Sprintf("%s IS NULL", column))
+	return qb
+}
+
+// WhereNotNull adds WHERE column IS NOT NULL
+func (qb *QueryBuilder) WhereNotNull(column string) *QueryBuilder {
+	qb.where = append(qb.where, fmt.Sprintf("%s IS NOT NULL", column))
+	return qb
+}
+
+// OrWhere adds OR WHERE conditions
+func (qb *QueryBuilder) OrWhere(conditions ...string) *QueryBuilder {
+	if len(conditions) > 0 {
+		qb.orWhere = append(qb.orWhere, conditions)
+	}
 	return qb
 }
 
@@ -58,9 +141,40 @@ func (qb *QueryBuilder) Join(joinClause string) *QueryBuilder {
 	return qb
 }
 
+// LeftJoin adds a LEFT JOIN
+func (qb *QueryBuilder) LeftJoin(table, condition string) *QueryBuilder {
+	qb.join = append(qb.join, fmt.Sprintf("LEFT JOIN %s ON %s", table, condition))
+	return qb
+}
+
+// RightJoin adds a RIGHT JOIN
+func (qb *QueryBuilder) RightJoin(table, condition string) *QueryBuilder {
+	qb.join = append(qb.join, fmt.Sprintf("RIGHT JOIN %s ON %s", table, condition))
+	return qb
+}
+
+// InnerJoin adds an INNER JOIN
+func (qb *QueryBuilder) InnerJoin(table, condition string) *QueryBuilder {
+	qb.join = append(qb.join, fmt.Sprintf("INNER JOIN %s ON %s", table, condition))
+	return qb
+}
+
+// GroupBy adds GROUP BY clause
+func (qb *QueryBuilder) GroupBy(columns ...string) *QueryBuilder {
+	qb.groupBy = append(qb.groupBy, columns...)
+	return qb
+}
+
+// Having adds HAVING clause
+func (qb *QueryBuilder) Having(condition string, args ...interface{}) *QueryBuilder {
+	qb.having = append(qb.having, condition)
+	qb.havingArgs = append(qb.havingArgs, args...)
+	return qb
+}
+
 // OrderBy sets ORDER BY clause
 func (qb *QueryBuilder) OrderBy(orderBy string) *QueryBuilder {
-	qb.orderBy = orderBy
+	qb.orderBy = append(qb.orderBy, orderBy)
 	return qb
 }
 
@@ -78,18 +192,49 @@ func (qb *QueryBuilder) Offset(offset int) *QueryBuilder {
 
 // Build builds the SELECT query
 func (qb *QueryBuilder) Build() (string, []interface{}) {
-	query := fmt.Sprintf("SELECT %s FROM %s", strings.Join(qb.columns, ", "), qb.table)
+	selectClause := "SELECT"
+	if qb.distinct {
+		selectClause = "SELECT DISTINCT"
+	}
+
+	query := fmt.Sprintf("%s %s FROM %s", selectClause, strings.Join(qb.columns, ", "), qb.table)
 
 	if len(qb.join) > 0 {
 		query += " " + strings.Join(qb.join, " ")
 	}
 
-	if len(qb.where) > 0 {
-		query += " WHERE " + strings.Join(qb.where, " AND ")
+	allArgs := qb.whereArgs
+
+	if len(qb.where) > 0 || len(qb.orWhere) > 0 {
+		query += " WHERE "
+		conditions := []string{}
+
+		// Add AND conditions
+		if len(qb.where) > 0 {
+			conditions = append(conditions, "("+strings.Join(qb.where, " AND ")+")")
+		}
+
+		// Add OR groups
+		for _, orGroup := range qb.orWhere {
+			if len(orGroup) > 0 {
+				conditions = append(conditions, "("+strings.Join(orGroup, " OR ")+")")
+			}
+		}
+
+		query += strings.Join(conditions, " AND ")
 	}
 
-	if qb.orderBy != "" {
-		query += " ORDER BY " + qb.orderBy
+	if len(qb.groupBy) > 0 {
+		query += " GROUP BY " + strings.Join(qb.groupBy, ", ")
+	}
+
+	if len(qb.having) > 0 {
+		query += " HAVING " + strings.Join(qb.having, " AND ")
+		allArgs = append(allArgs, qb.havingArgs...)
+	}
+
+	if len(qb.orderBy) > 0 {
+		query += " ORDER BY " + strings.Join(qb.orderBy, ", ")
 	}
 
 	if qb.limit > 0 {
@@ -100,7 +245,7 @@ func (qb *QueryBuilder) Build() (string, []interface{}) {
 		query += fmt.Sprintf(" OFFSET %d", qb.offset)
 	}
 
-	return query, qb.whereArgs
+	return query, allArgs
 }
 
 // BuildResult builds query and returns QueryResult
@@ -320,11 +465,11 @@ func (ub *UpdateBuilder) Execute(db *sql.DB) (int64, error) {
 
 // DeleteBuilder builds soft DELETE queries (UPDATE deleted_at)
 type DeleteBuilder struct {
-	table     string
-	where     []string
-	whereArgs []interface{}
-	deletedBy *string // User UUID who deleted
-	hardDelete bool   // True = hard delete, False = soft delete
+	table      string
+	where      []string
+	whereArgs  []interface{}
+	deletedBy  *string // User UUID who deleted
+	hardDelete bool    // True = hard delete, False = soft delete
 }
 
 // NewDeleteBuilder creates a new delete builder (soft delete by default)
@@ -510,3 +655,127 @@ func RawQueryRow(db *sql.DB, query string, args ...interface{}) *sql.Row {
 
 	return row
 }
+
+// Helper functions for common aggregate queries
+
+// Count returns count of rows
+func Count(db *sql.DB, table string, where string, args ...interface{}) (int64, error) {
+	query := fmt.Sprintf("SELECT COUNT(*) FROM %s", table)
+	if where != "" {
+		query += " WHERE " + where
+	}
+	
+	start := time.Now()
+	var count int64
+	err := db.QueryRow(query, args...).Scan(&count)
+	duration := time.Since(start)
+	
+	logger.Info("Database Count",
+		zap.String("query", query),
+		zap.Any("args", args),
+		zap.Duration("duration", duration),
+		zap.Int64("count", count),
+	)
+	
+	return count, err
+}
+
+// Exists checks if rows exist
+func Exists(db *sql.DB, table string, where string, args ...interface{}) (bool, error) {
+	count, err := Count(db, table, where, args...)
+	return count > 0, err
+}
+
+// Paginate helper for pagination
+type PaginationResult struct {
+	Page       int         `json:"page"`
+	PerPage    int         `json:"per_page"`
+	Total      int64       `json:"total"`
+	TotalPages int         `json:"total_pages"`
+	Data       interface{} `json:"data"`
+}
+
+func Paginate(qb *QueryBuilder, page, perPage int) *QueryBuilder {
+	if page < 1 {
+		page = 1
+	}
+	if perPage < 1 {
+		perPage = 10
+	}
+	
+	offset := (page - 1) * perPage
+	return qb.Limit(perPage).Offset(offset)
+}
+
+// BulkInsert for inserting multiple rows
+type BulkInsertBuilder struct {
+	table   string
+	columns []string
+	rows    [][]interface{}
+}
+
+func NewBulkInsertBuilder(table string, columns []string) *BulkInsertBuilder {
+	return &BulkInsertBuilder{
+		table:   table,
+		columns: columns,
+		rows:    [][]interface{}{},
+	}
+}
+
+func (bib *BulkInsertBuilder) AddRow(values ...interface{}) *BulkInsertBuilder {
+	if len(values) != len(bib.columns) {
+		logger.Error("Bulk insert: column count mismatch",
+			zap.Int("expected", len(bib.columns)),
+			zap.Int("got", len(values)),
+		)
+		return bib
+	}
+	bib.rows = append(bib.rows, values)
+	return bib
+}
+
+func (bib *BulkInsertBuilder) Execute(db *sql.DB) (int64, error) {
+	if len(bib.rows) == 0 {
+		return 0, fmt.Errorf("no rows to insert")
+	}
+	
+	// Build placeholders
+	valuePlaceholders := []string{}
+	allValues := []interface{}{}
+	placeholder := 1
+	
+	for _, row := range bib.rows {
+		rowPlaceholders := []string{}
+		for range row {
+			rowPlaceholders = append(rowPlaceholders, fmt.Sprintf("$%d", placeholder))
+			placeholder++
+		}
+		valuePlaceholders = append(valuePlaceholders, "("+strings.Join(rowPlaceholders, ", ")+")")
+		allValues = append(allValues, row...)
+	}
+	
+	query := fmt.Sprintf("INSERT INTO %s (%s) VALUES %s",
+		bib.table,
+		strings.Join(bib.columns, ", "),
+		strings.Join(valuePlaceholders, ", "),
+	)
+	
+	start := time.Now()
+	result, err := db.Exec(query, allValues...)
+	duration := time.Since(start)
+	
+	var rowsAffected int64
+	if err == nil {
+		rowsAffected, _ = result.RowsAffected()
+	}
+	
+	logger.Info("Database Bulk Insert",
+		zap.String("query", query),
+		zap.Int("rows", len(bib.rows)),
+		zap.Duration("duration", duration),
+		zap.Int64("rows_affected", rowsAffected),
+	)
+	
+	return rowsAffected, err
+}
+
