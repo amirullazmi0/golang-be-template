@@ -5,28 +5,72 @@ Production-ready Gin backend with clean architecture, Prisma migrations, and cus
 ## 📁 Project Structure
 
 ```
-root-backend/
-├── config/              # Configuration
-│   └── config.go       # Viper config loader
+kratify-backend/
+├── config/                    # Configuration
+│   └── config.go             # Viper config loader with logger config
 ├── internal/
-│   ├── handler/        # HTTP handlers (controllers)
-│   ├── usecase/        # Business logic layer
-│   ├── repository/     # Data access layer
-│   ├── model/          # Domain models
-│   ├── dto/            # Data Transfer Objects (request/response)
-│   └── middleware/     # Custom middlewares (auth, logger, etc)
+│   ├── handler/              # HTTP handlers (controllers)
+│   │   ├── user_handler.go
+│   │   ├── address_handler.go
+│   │   └── routes.go
+│   ├── usecase/              # Business logic layer
+│   │   ├── user_usecase.go
+│   │   └── address_usecase.go
+│   ├── repository/           # Data access layer
+│   │   ├── user_repository.go
+│   │   └── address_repository.go
+│   ├── model/                # Domain models
+│   │   ├── user.go
+│   │   └── address.go
+│   ├── dto/                  # Data Transfer Objects (request/response)
+│   │   ├── user_dto.go
+│   │   └── address.dto.go
+│   └── middleware/           # Custom middlewares
+│       ├── auth.go          # JWT authentication
+│       ├── logger.go        # Structured HTTP request logger
+│       ├── recovery.go      # Panic recovery
+│       └── role.go          # Role-based access control
 ├── pkg/
-│   ├── database/       # Database connection & query builder
-│   ├── logger/         # Zap structured logger
-│   ├── validator/      # Request validation
-│   └── response/       # Standard API response
-├── prisma/             # Prisma schema & migrations
-│   ├── schema.prisma   # Database schema
-│   └── migrations/     # Generated migrations
-├── docs/               # Swagger documentation (auto-generated)
-├── .env                # Environment variables
-├── .env.example        # Environment variables template
-└── main.go             # Application entry point
+│   ├── database/             # Database connection & query builder
+│   │   ├── db.go
+│   │   ├── query_builder.go
+│   │   └── README.md
+│   ├── logger/               # Zap structured logger (Grafana Loki ready)
+│   │   └── logger.go
+│   ├── email/                # Email service (SMTP)
+│   │   └── email.go
+│   ├── validator/            # Request validation
+│   │   └── validator.go
+│   └── response/             # Standard API response
+│       └── response.go
+├── prisma/                   # Prisma schema & migrations
+│   ├── schema.prisma         # Database schema
+│   └── migrations/           # Generated migration files
+│       ├── migration_lock.toml
+│       └── 20XXXXXX_*.sql
+├── monitoring/               # Grafana monitoring stack configs
+│   ├── loki-config.yaml     # Loki configuration
+│   ├── promtail-config.yaml # Promtail log collector config
+│   └── grafana-datasources.yaml
+├── logs/                     # Application logs (auto-generated)
+│   ├── .gitkeep
+│   └── app.log              # JSON formatted logs for Loki
+├── docs/                     # Swagger documentation (auto-generated)
+│   ├── docs.go
+│   ├── swagger.json
+│   └── swagger.yaml
+├── bin/                      # Compiled binaries
+├── tmp/                      # Air hot reload temp files
+├── docker-compose.yml        # Grafana + Loki + Promtail stack
+├── setup-monitoring.sh       # Quick setup script for monitoring
+├── .env                      # Environment variables
+├── .env.example              # Environment variables template
+├── .gitignore
+├── go.mod
+├── go.sum
+├── main.go                   # Application entry point
+├── README.md                 # This file
+└── GRAFANA_GUIDE.md          # Complete Grafana usage guide
 ```
 
 ## 🚀 Features
