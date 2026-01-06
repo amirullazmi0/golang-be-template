@@ -57,7 +57,16 @@ func main() {
 	}
 
 	// Initialize logger
-	if err := logger.InitLogger(cfg.App.Debug); err != nil {
+	loggerCfg := logger.LoggerConfig{
+		Debug:       cfg.App.Debug,
+		LogToFile:   cfg.Logger.LogToFile,
+		LogFilePath: cfg.Logger.LogFilePath,
+		MaxSize:     cfg.Logger.MaxSize,
+		MaxBackups:  cfg.Logger.MaxBackups,
+		MaxAge:      cfg.Logger.MaxAge,
+		Compress:    cfg.Logger.Compress,
+	}
+	if err := logger.InitLogger(loggerCfg); err != nil {
 		panic(fmt.Sprintf("Failed to initialize logger: %v", err))
 	}
 	defer logger.Sync()

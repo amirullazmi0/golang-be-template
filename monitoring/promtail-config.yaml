@@ -1,0 +1,42 @@
+server:
+     http_listen_port: 9080
+     grpc_listen_port: 0
+
+positions:
+     filename: /tmp/positions.yaml
+
+clients:
+     - url: http://loki:3100/loki/api/v1/push
+
+scrape_configs:
+     # Scrape JSON logs from application
+     - job_name: kratify-backend
+       static_configs:
+            - targets:
+                   - localhost
+              labels:
+                   job: kratify-backend
+                   env: development
+                   __path__: /var/log/app/*.log
+
+       pipeline_stages:
+            # Parse JSON logs
+            - json:
+                   expressions:
+                        timestamp: timestamp
+                        level: level
+                        message: message
+                        caller: caller
+
+            # Extract labels from JSON
+            - labels:
+                   level:
+
+            # Set timestamp from log entry
+            - timestamp:
+                   source: timestamp
+                   format: RFC3339Nano
+
+            # Output formatting
+            - output:
+                   source: message

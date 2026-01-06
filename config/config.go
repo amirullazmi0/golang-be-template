@@ -13,6 +13,7 @@ type Config struct {
 	JWT      JWTConfig
 	CORS     CORSConfig
 	SMTP     SMTPConfig
+	Logger   LoggerConfig
 }
 
 type AppConfig struct {
@@ -48,6 +49,15 @@ type SMTPConfig struct {
 	Port     int
 	FromName string
 	FromEmail string
+}
+
+type LoggerConfig struct {
+	LogToFile   bool
+	LogFilePath string
+	MaxSize     int
+	MaxBackups  int
+	MaxAge      int
+	Compress    bool
 }
 
 func LoadConfig() (*Config, error) {
@@ -88,6 +98,14 @@ func LoadConfig() (*Config, error) {
 			Port:      viper.GetInt("SMTP_PORT"),
 			FromName:  viper.GetString("SMTP_FROM_NAME"),
 			FromEmail: viper.GetString("SMTP_FROM_EMAIL"),
+		},
+		Logger: LoggerConfig{
+			LogToFile:   viper.GetBool("LOG_TO_FILE"),
+			LogFilePath: viper.GetString("LOG_FILE_PATH"),
+			MaxSize:     viper.GetInt("LOG_MAX_SIZE"),
+			MaxBackups:  viper.GetInt("LOG_MAX_BACKUPS"),
+			MaxAge:      viper.GetInt("LOG_MAX_AGE"),
+			Compress:    viper.GetBool("LOG_COMPRESS"),
 		},
 	}
 

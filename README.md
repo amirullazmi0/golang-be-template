@@ -471,15 +471,124 @@ model Product {
   stock       Int       @default(0)
   isActive    Boolean   @default(true) @map("is_active")
   createdAt   DateTime  @default(now()) @map("created_at")
+## 📊 Monitoring dengan Grafana & Loki
+
+Project ini sudah dikonfigurasi dengan **Grafana Loki** untuk centralized logging dan monitoring.
+
+### Setup Monitoring Stack
+
+1. **Start Grafana, Loki & Promtail:**
+
+```bash
+docker-compose up -d
+```
+
+2. **Akses Grafana:**
+   - URL: http://localhost:3000
+   - Username: `admin`
+   - Password: `admin`
+
+3. **View Logs di Grafana:**
+   - Buka **Explore** menu (ikon kompas)
+   - Pilih **Loki** sebagai data source
+   - Query contoh:
+     ```logql
+     {job="kratify-backend"}
+     ```
+   - Filter by level:
+     ```logql
+     {job="kratify-backend", level="error"}
+     ```
+   - Search by message:
+     ```logql
+     {job="kratify-backend"} |= "HTTP Request"
+     ```
+
+### Log Format
+
+Logger menggunakan **JSON format** untuk kompatibilitas dengan Loki:
+
+```json
+{
+  "timestamp": "2026-01-06T10:30:45.123Z",
+  "level": "info",
+  "message": "HTTP Request",
+  "method": "GET",
+  "path": "/api/users/profile",
+  "status": 200,
+  "ip": "127.0.0.1",
+  "latency_ms": 15,
+  "request_id": "abc123"
+}
+```
+
+### Environment Variables untuk Logger
+
+Tambahkan di `.env`:
+
+```env
+LOG_TO_FILE=true
+LOG_FILE_PATH=logs/app.log
+LOG_MAX_SIZE=100       # MB
+LOG_MAX_BACKUPS=3      # jumlah backup files
+LOG_MAX_AGE=28         # days
+LOG_COMPRESS=true      # compress rotated logs
+```
+
+### Monitoring Features
+
+- ✅ **Structured JSON Logging**: Semua log dalam format JSON
+- ✅ **Log Aggregation**: Promtail collect logs → Loki store → Grafana visualize
+- ✅ **Multiple Output**: Console (colored) + File (JSON)
+- ✅ **Log Levels**: Debug, Info, Warn, Error, Fatal
+- ✅ **HTTP Request Tracking**: Method, path, status, latency, IP, user agent
+- ✅ **Request ID**: Trace individual requests
+- ✅ **Error Tracking**: Auto-log errors dengan level sesuai status code
+- ✅ **Log Retention**: 31 days default
+
+### Query Examples di Grafana
+
+**1. Semua HTTP errors (4xx & 5xx):**
+```logql
+{job="kratify-backend"} | json | status >= 400
+```
+
+**2. Slow requests (>1 second):**
+```logql
+{job="kratify-backend"} | json | latency_ms > 1000
+```
+
+**3. Requests per endpoint:**
+```logql
+sum by (path) (count_over_time({job="kratify-backend"}[5m]))
+```
+
+**4. Error rate:**
+```logql
+sum(rate({job="kratify-backend", level="error"}[5m]))
+```
+
+### Stop Monitoring Stack
+
+```bash
+docker-compose down
+```
+
+Untuk hapus data juga:
+```bash
+docker-compose down -v
+```
+
 ## 🎯 Next Steps
 
 -    [x] Add role-based access control (RBAC) ✅
 -    [x] Add email verification ✅
 -    [x] Add refresh token system ✅
+-    [x] Add Grafana Loki monitoring ✅
 -    [ ] Add rate limiting
 -    [ ] Add caching (Redis)
 -    [ ] Add unit tests
--    [ ] Add Docker support
+-    [ ] Add Docker support for app
 -    [ ] Add CI/CD pipeline
 -    [ ] Add Prometheus metrics
 -    [ ] Add distributed tracing

@@ -1,0 +1,54 @@
+version: "3.8"
+
+services:
+  # Grafana Loki - Log aggregation system
+  loki:
+    image: grafana/loki:latest
+    container_name: kratify-loki
+    ports:
+      - "3100:3100"
+    command: -config.file=/etc/loki/local-config.yaml
+    volumes:
+      - ./monitoring/loki-config.yaml:/etc/loki/local-config.yaml
+      - loki-data:/loki
+    networks:
+      - monitoring
+
+  # Promtail - Log collector/shipper
+  promtail:
+    image: grafana/promtail:latest
+    container_name: kratify-promtail
+    volumes:
+      - ./logs:/var/log/app
+      - ./monitoring/promtail-config.yaml:/etc/promtail/config.yaml
+    command: -config.file=/etc/promtail/config.yaml
+    depends_on:
+      - loki
+    networks:
+      - monitoring
+
+  # Grafana - Visualization and monitoring
+  grafana:
+    image: grafana/grafana:latest
+    container_name: kratify-grafana
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_USERS_ALLOW_SIGN_UP=false
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./monitoring/grafana-datasources.yaml:/etc/grafana/provisioning/datasources/datasources.yaml
+    depends_on:
+      - loki
+    networks:
+      - monitoring
+
+networks:
+  monitoring:
+    driver: bridge
+
+volumes:
+  loki-data:
+  grafana-data:
