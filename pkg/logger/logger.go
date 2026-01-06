@@ -40,7 +40,6 @@ func InitLogger(cfg LoggerConfig) error {
 	var level zapcore.Level
 	if cfg.Debug {
 		level = zapcore.DebugLevel
-		encoderConfig.EncodeLevel = zapcore.CapitalColorLevelEncoder
 	} else {
 		level = zapcore.InfoLevel
 	}
@@ -48,10 +47,14 @@ func InitLogger(cfg LoggerConfig) error {
 	// Create cores for different outputs
 	var cores []zapcore.Core
 
-	// Console output
-	consoleEncoder := zapcore.NewConsoleEncoder(encoderConfig)
-	if !cfg.Debug {
-		// Use JSON encoder for production (Loki compatible)
+	// Console output - use color only for debug mode without file logging
+	var consoleEncoder zapcore.Encoder
+	if cfg.Debug && !cfg.LogToFile {
+		encoderConfig.EncodeLevel = zapcore.CapitalColorLevelEncoder
+		consoleEncoder = zapcore.NewConsoleEncoder(encoderConfig)
+	} else {
+		// Use JSON encoder for production/file logging (Loki compatible)
+		encoderConfig.EncodeLevel = zapcore.LowercaseLevelEncoder
 		consoleEncoder = zapcore.NewJSONEncoder(encoderConfig)
 	}
 	consoleCore := zapcore.NewCore(

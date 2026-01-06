@@ -51,7 +51,7 @@ func (r *userRepository) FindByID(id string) (*model.User, error) {
 		Build()
 
 	var user model.User
-	err := r.db.QueryRow(query, args...).Scan(
+	err := database.RawQueryRow(r.db, query, args...).Scan(
 		&user.ID,
 		&user.Email,
 		&user.Password,
@@ -89,7 +89,7 @@ func (r *userRepository) FindByEmail(email string) (*model.User, error) {
 		Build()
 
 	var user model.User
-	err := r.db.QueryRow(query, args...).Scan(
+	err := database.RawQueryRow(r.db, query, args...).Scan(
 		&user.ID,
 		&user.Email,
 		&user.Password,
@@ -125,7 +125,7 @@ func (r *userRepository) FindAll() ([]model.User, error) {
 		OrderBy("created_at DESC").
 		Build()
 
-	rows, err := r.db.Query(query, args...)
+	rows, err := database.RawQuery(r.db, query, args...)
 	if err != nil {
 		return nil, err
 	}

@@ -72,7 +72,7 @@ func (r *addressRepository) FindByID(id string) (*model.Address, error) {
 		Build()
 
 	var address model.Address
-	err := r.db.QueryRow(query, args...).Scan(
+	err := database.RawQueryRow(r.db, query, args...).Scan(
 		&address.ID,
 		&address.UserID,
 		&address.Label,
@@ -111,7 +111,7 @@ func (r *addressRepository) FindByUserID(userID string) ([]model.Address, error)
 		OrderBy("is_primary DESC, created_at DESC").
 		Build()
 
-	rows, err := r.db.Query(query, args...)
+	rows, err := database.RawQuery(r.db, query, args...)
 	if err != nil {
 		return nil, err
 	}

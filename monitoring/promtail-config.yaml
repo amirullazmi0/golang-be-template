@@ -20,23 +20,33 @@ scrape_configs:
                    __path__: /var/log/app/*.log
 
        pipeline_stages:
-            # Parse JSON logs
+            # Parse JSON logs and extract ALL fields
             - json:
                    expressions:
                         timestamp: timestamp
                         level: level
                         message: message
                         caller: caller
+                        query: query
+                        args: args
+                        duration: duration
+                        operation: operation
+                        rows_affected: rows_affected
+                        method: method
+                        path: path
+                        status: status
+                        latency: latency
+                        latency_ms: latency_ms
+                        ip: ip
+                        user_agent: user_agent
+                        response_size: response_size
 
             # Extract labels from JSON
             - labels:
                    level:
+                   operation:
 
             # Set timestamp from log entry
             - timestamp:
                    source: timestamp
                    format: RFC3339Nano
-
-            # Output formatting
-            - output:
-                   source: message

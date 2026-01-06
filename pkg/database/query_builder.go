@@ -5,6 +5,9 @@ import (
 	"fmt"
 	"strings"
 	"time"
+
+	"github.com/amirullazmi0/kratify-backend/pkg/logger"
+	"go.uber.org/zap"
 )
 
 // QueryResult holds query string and arguments
@@ -109,7 +112,25 @@ func (qb *QueryBuilder) BuildResult() QueryResult {
 // Execute executes the query and returns rows
 func (qb *QueryBuilder) Execute(db *sql.DB) (*sql.Rows, error) {
 	query, args := qb.Build()
-	return db.Query(query, args...)
+	start := time.Now()
+	rows, err := db.Query(query, args...)
+	duration := time.Since(start)
+
+	// Log query execution
+	logFields := []zap.Field{
+		zap.String("query", query),
+		zap.Any("args", args),
+		zap.Duration("duration", duration),
+		zap.String("operation", "SELECT"),
+	}
+
+	if err != nil {
+		logger.Error("Database Query Failed", append(logFields, zap.Error(err))...)
+	} else {
+		logger.Info("Database Query", logFields...)
+	}
+
+	return rows, err
 }
 
 // InsertBuilder builds INSERT queries
@@ -173,8 +194,25 @@ func (ib *InsertBuilder) BuildResult() QueryResult {
 // Execute executes the insert query and returns UUID
 func (ib *InsertBuilder) Execute(db *sql.DB) (string, error) {
 	query, args := ib.Build()
+	start := time.Now()
 	var id string
 	err := db.QueryRow(query, args...).Scan(&id)
+	duration := time.Since(start)
+
+	// Log query execution
+	logFields := []zap.Field{
+		zap.String("query", query),
+		zap.Any("args", args),
+		zap.Duration("duration", duration),
+		zap.String("operation", "INSERT"),
+	}
+
+	if err != nil {
+		logger.Error("Database Insert Failed", append(logFields, zap.Error(err))...)
+	} else {
+		logger.Info("Database Insert", append(logFields, zap.String("id", id))...)
+	}
+
 	return id, err
 }
 
@@ -253,11 +291,31 @@ func (ub *UpdateBuilder) BuildResult() QueryResult {
 // Execute executes the update query
 func (ub *UpdateBuilder) Execute(db *sql.DB) (int64, error) {
 	query, args := ub.Build()
+	start := time.Now()
 	result, err := db.Exec(query, args...)
+	duration := time.Since(start)
+
+	var rowsAffected int64
+	if err == nil {
+		rowsAffected, _ = result.RowsAffected()
+	}
+
+	// Log query execution
+	logFields := []zap.Field{
+		zap.String("query", query),
+		zap.Any("args", args),
+		zap.Duration("duration", duration),
+		zap.String("operation", "UPDATE"),
+		zap.Int64("rows_affected", rowsAffected),
+	}
+
 	if err != nil {
+		logger.Error("Database Update Failed", append(logFields, zap.Error(err))...)
 		return 0, err
 	}
-	return result.RowsAffected()
+
+	logger.Info("Database Update", logFields...)
+	return rowsAffected, nil
 }
 
 // DeleteBuilder builds soft DELETE queries (UPDATE deleted_at)
@@ -356,24 +414,99 @@ func (db *DeleteBuilder) BuildResult() QueryResult {
 // Execute executes the delete query
 func (db *DeleteBuilder) Execute(sqlDB *sql.DB) (int64, error) {
 	query, args := db.Build()
+	start := time.Now()
 	result, err := sqlDB.Exec(query, args...)
+	duration := time.Since(start)
+
+	var rowsAffected int64
+	if err == nil {
+		rowsAffected, _ = result.RowsAffected()
+	}
+
+	// Log query execution
+	logFields := []zap.Field{
+		zap.String("query", query),
+		zap.Any("args", args),
+		zap.Duration("duration", duration),
+		zap.String("operation", "DELETE"),
+		zap.Int64("rows_affected", rowsAffected),
+		zap.Bool("hard_delete", db.hardDelete),
+	}
+
 	if err != nil {
+		logger.Error("Database Delete Failed", append(logFields, zap.Error(err))...)
 		return 0, err
 	}
-	return result.RowsAffected()
+
+	logger.Info("Database Delete", logFields...)
+	return rowsAffected, nil
 }
 
 // RawQuery executes a raw SQL query
 func RawQuery(db *sql.DB, query string, args ...interface{}) (*sql.Rows, error) {
-	return db.Query(query, args...)
+	start := time.Now()
+	rows, err := db.Query(query, args...)
+	duration := time.Since(start)
+
+	// Log query execution
+	logFields := []zap.Field{
+		zap.String("query", query),
+		zap.Any("args", args),
+		zap.Duration("duration", duration),
+		zap.String("operation", "RAW_QUERY"),
+	}
+
+	if err != nil {
+		logger.Error("Database Raw Query Failed", append(logFields, zap.Error(err))...)
+	} else {
+		logger.Info("Database Raw Query", logFields...)
+	}
+
+	return rows, err
 }
 
 // RawExec executes a raw SQL command
 func RawExec(db *sql.DB, query string, args ...interface{}) (sql.Result, error) {
-	return db.Exec(query, args...)
+	start := time.Now()
+	result, err := db.Exec(query, args...)
+	duration := time.Since(start)
+
+	var rowsAffected int64
+	if err == nil {
+		rowsAffected, _ = result.RowsAffected()
+	}
+
+	// Log query execution
+	logFields := []zap.Field{
+		zap.String("query", query),
+		zap.Any("args", args),
+		zap.Duration("duration", duration),
+		zap.String("operation", "RAW_EXEC"),
+		zap.Int64("rows_affected", rowsAffected),
+	}
+
+	if err != nil {
+		logger.Error("Database Raw Exec Failed", append(logFields, zap.Error(err))...)
+	} else {
+		logger.Info("Database Raw Exec", logFields...)
+	}
+
+	return result, err
 }
 
 // RawQueryRow executes a raw SQL query for single row
 func RawQueryRow(db *sql.DB, query string, args ...interface{}) *sql.Row {
-	return db.QueryRow(query, args...)
+	start := time.Now()
+	row := db.QueryRow(query, args...)
+	duration := time.Since(start)
+
+	// Log query execution
+	logger.Info("Database Raw QueryRow",
+		zap.String("query", query),
+		zap.Any("args", args),
+		zap.Duration("duration", duration),
+		zap.String("operation", "RAW_QUERY_ROW"),
+	)
+
+	return row
 }
