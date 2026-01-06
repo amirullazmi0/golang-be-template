@@ -129,18 +129,43 @@ cp .env.example .env
 4. **Edit `.env`:**
 
 ```env
+# Server Configuration
+APP_NAME=Kratify Backend
+APP_ENV=development
+APP_PORT=8080
+APP_DEBUG=true
+
+# Database Configuration
 DB_HOST=localhost
 DB_PORT=5432
 DB_USER=postgres
 DB_PASSWORD=your_password
 DB_NAME=kratify_db
-JWT_SECRET=your-secret-key-change-this
+DB_SSL_MODE=disable
+DB_TIMEZONE=Asia/Jakarta
+
+# JWT Configuration
+JWT_SECRET=your-super-secret-jwt-key-change-this-in-production
+JWT_EXPIRED_HOUR=24
+
+# CORS Configuration
+CORS_ALLOWED_ORIGINS=http://localhost:3000,http://localhost:5173
+
+# SMTP Configuration (Gmail example)
 SMTP_EMAIL=your-email@gmail.com
 SMTP_PASSWORD=your-app-password
 SMTP_HOST=smtp.gmail.com
 SMTP_PORT=587
-SMTP_FROM_NAME="Your App Name"
+SMTP_FROM_NAME="Kratify Backend"
 SMTP_FROM_EMAIL=your-email@gmail.com
+
+# Logger Configuration
+LOG_TO_FILE=true
+LOG_FILE_PATH=logs/app.log
+LOG_MAX_SIZE=100
+LOG_MAX_BACKUPS=3
+LOG_MAX_AGE=28
+LOG_COMPRESS=true
 ```
 
 5. **Run Prisma migrations:**
