@@ -17,6 +17,7 @@ import (
 	"github.com/amirullazmi0/kratify-backend/internal/usecase"
 	"github.com/amirullazmi0/kratify-backend/pkg/database"
 	"github.com/amirullazmi0/kratify-backend/pkg/email"
+	"github.com/amirullazmi0/kratify-backend/pkg/imagekit"
 	"github.com/amirullazmi0/kratify-backend/pkg/logger"
 	"github.com/amirullazmi0/kratify-backend/pkg/validator"
 
@@ -96,6 +97,15 @@ func main() {
 	addressUsecase := usecase.NewAddressUsecase(addressRepo, &cfg.JWT)
 	addressHandler := handler.NewAddressHandler(addressUsecase)
 
+	// Initialize attachment usecase
+	imageKitService, err := imagekit.NewImageKitService(cfg.ImageKit.PublicKey, cfg.ImageKit.PrivateKey, cfg.ImageKit.UrlEndpoint)
+	if err != nil {
+		logger.Fatal("Failed to initialize ImageKit service", zap.Error(err))
+	}
+	attachmentRepo := repository.NewAttachmentRepository(db.DB, imageKitService)
+	attachmentUsecase := usecase.NewAttachmentUsecase(attachmentRepo)
+	attachmentHandler := handler.NewAttachmentHandler(attachmentUsecase)
+
 	// Setup Gin
 	if !cfg.App.Debug {
 		gin.SetMode(gin.ReleaseMode)
@@ -125,7 +135,12 @@ func main() {
 	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
 	// Setup routes
-	handler.SetupRoutes(router, userHandler, addressHandler, cfg)
+	handler.SetupRoutes(
+		router,
+		userHandler,
+		addressHandler,
+		attachmentHandler,
+		cfg)
 
 	// Setup HTTP server
 	srv := &http.Server{

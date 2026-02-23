@@ -8,7 +8,12 @@ import (
 )
 
 // SetupRoutes configures all application routes
-func SetupRoutes(router *gin.Engine, userHandler *UserHandler, addressHandler *AddressHandler, cfg *config.Config) {
+func SetupRoutes(
+	router *gin.Engine,
+	userHandler *UserHandler,
+	addressHandler *AddressHandler,
+	attachmentHandler *AttachmentHandler,
+	cfg *config.Config) {
 	// API routes
 	api := router.Group("/api")
 	{
@@ -44,6 +49,16 @@ func SetupRoutes(router *gin.Engine, userHandler *UserHandler, addressHandler *A
 			addresses.GET("/:id", addressHandler.GetAddressByID)
 			addresses.PUT("/:id", addressHandler.UpdateAddress)
 			addresses.DELETE("/:id", addressHandler.DeleteAddress)
+		}
+
+		// Attachment routes (protected)
+		attachments := api.Group("/attachments")
+		attachments.Use(middleware.JWTAuth(&cfg.JWT))
+		{
+			attachments.POST("/image", attachmentHandler.UploadImage)
+			attachments.POST("/document", attachmentHandler.UploadDocument)
+			attachments.POST("/product-image", attachmentHandler.UploadProductImage)
+			attachments.POST("/profile-image", attachmentHandler.UploadProfileImage)
 		}
 	}
 }
