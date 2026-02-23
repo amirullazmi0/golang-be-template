@@ -14,6 +14,7 @@ type Config struct {
 	CORS     CORSConfig
 	SMTP     SMTPConfig
 	Logger   LoggerConfig
+	ImageKit ImageKitConfig
 }
 
 type AppConfig struct {
@@ -58,6 +59,12 @@ type LoggerConfig struct {
 	MaxBackups  int
 	MaxAge      int
 	Compress    bool
+}
+
+type ImageKitConfig struct {
+	PublicKey   string
+	PrivateKey  string
+	UrlEndpoint string
 }
 
 func LoadConfig() (*Config, error) {
@@ -106,6 +113,11 @@ func LoadConfig() (*Config, error) {
 			MaxBackups:  viper.GetInt("LOG_MAX_BACKUPS"),
 			MaxAge:      viper.GetInt("LOG_MAX_AGE"),
 			Compress:    viper.GetBool("LOG_COMPRESS"),
+		},
+		ImageKit: ImageKitConfig{
+			PublicKey:   viper.GetString("IMAGEKIT_PUBLIC_KEY"),
+			PrivateKey:  viper.GetString("IMAGEKIT_PRIVATE_KEY"),
+			UrlEndpoint: viper.GetString("IMAGEKIT_URL_ENDPOINT"),
 		},
 	}
 
