@@ -254,6 +254,38 @@ func (qb *QueryBuilder) BuildResult() QueryResult {
 	return QueryResult{Query: query, Args: args}
 }
 
+// BuildCount builds the SELECT COUNT(*) query
+func (qb *QueryBuilder) BuildCount() (string, []interface{}) {
+	query := fmt.Sprintf("SELECT COUNT(*) FROM %s", qb.table)
+
+	if len(qb.join) > 0 {
+		query += " " + strings.Join(qb.join, " ")
+	}
+
+	allArgs := qb.whereArgs
+
+	if len(qb.where) > 0 || len(qb.orWhere) > 0 {
+		query += " WHERE "
+		conditions := []string{}
+
+		// Add AND conditions
+		if len(qb.where) > 0 {
+			conditions = append(conditions, "("+strings.Join(qb.where, " AND ")+")")
+		}
+
+		// Add OR groups
+		for _, orGroup := range qb.orWhere {
+			if len(orGroup) > 0 {
+				conditions = append(conditions, "("+strings.Join(orGroup, " OR ")+")")
+			}
+		}
+
+		query += strings.Join(conditions, " AND ")
+	}
+
+	return query, allArgs
+}
+
 // Execute executes the query and returns rows
 func (qb *QueryBuilder) Execute(db *sql.DB) (*sql.Rows, error) {
 	query, args := qb.Build()
@@ -397,8 +429,8 @@ func (ub *UpdateBuilder) SetUpdatedBy(userID string) *UpdateBuilder {
 
 // Where adds a WHERE condition
 func (ub *UpdateBuilder) Where(condition string, args ...interface{}) *UpdateBuilder {
-	// Adjust placeholder numbering
-	paramOffset := len(ub.setArgs)
+	// Adjust placeholder numbering to account for both SET and previous WHERE args
+	paramOffset := len(ub.setArgs) + len(ub.whereArgs)
 	for i := range args {
 		condition = strings.Replace(condition, fmt.Sprintf("$%d", i+1), fmt.Sprintf("$%d", paramOffset+i+1), 1)
 	}
@@ -664,19 +696,19 @@ func Count(db *sql.DB, table string, where string, args ...interface{}) (int64, 
 	if where != "" {
 		query += " WHERE " + where
 	}
-	
+
 	start := time.Now()
 	var count int64
 	err := db.QueryRow(query, args...).Scan(&count)
 	duration := time.Since(start)
-	
+
 	logger.Info("Database Count",
 		zap.String("query", query),
 		zap.Any("args", args),
 		zap.Duration("duration", duration),
 		zap.Int64("count", count),
 	)
-	
+
 	return count, err
 }
 
@@ -702,7 +734,7 @@ func Paginate(qb *QueryBuilder, page, perPage int) *QueryBuilder {
 	if perPage < 1 {
 		perPage = 10
 	}
-	
+
 	offset := (page - 1) * perPage
 	return qb.Limit(perPage).Offset(offset)
 }
@@ -738,12 +770,12 @@ func (bib *BulkInsertBuilder) Execute(db *sql.DB) (int64, error) {
 	if len(bib.rows) == 0 {
 		return 0, fmt.Errorf("no rows to insert")
 	}
-	
+
 	// Build placeholders
 	valuePlaceholders := []string{}
 	allValues := []interface{}{}
 	placeholder := 1
-	
+
 	for _, row := range bib.rows {
 		rowPlaceholders := []string{}
 		for range row {
@@ -753,29 +785,28 @@ func (bib *BulkInsertBuilder) Execute(db *sql.DB) (int64, error) {
 		valuePlaceholders = append(valuePlaceholders, "("+strings.Join(rowPlaceholders, ", ")+")")
 		allValues = append(allValues, row...)
 	}
-	
+
 	query := fmt.Sprintf("INSERT INTO %s (%s) VALUES %s",
 		bib.table,
 		strings.Join(bib.columns, ", "),
 		strings.Join(valuePlaceholders, ", "),
 	)
-	
+
 	start := time.Now()
 	result, err := db.Exec(query, allValues...)
 	duration := time.Since(start)
-	
+
 	var rowsAffected int64
 	if err == nil {
 		rowsAffected, _ = result.RowsAffected()
 	}
-	
+
 	logger.Info("Database Bulk Insert",
 		zap.String("query", query),
 		zap.Int("rows", len(bib.rows)),
 		zap.Duration("duration", duration),
 		zap.Int64("rows_affected", rowsAffected),
 	)
-	
+
 	return rowsAffected, err
 }
-
