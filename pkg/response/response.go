@@ -8,7 +8,15 @@ type Response struct {
 	Success bool        `json:"success"`
 	Message string      `json:"message"`
 	Data    interface{} `json:"data,omitempty"`
+	Meta    *Meta       `json:"meta,omitempty"`
 	Error   interface{} `json:"error,omitempty"`
+}
+
+type Meta struct {
+	TotalData   int `json:"total_data"`
+	TotalPage   int `json:"total_page"`
+	CurrentPage int `json:"current_page"`
+	Limit       int `json:"limit"`
 }
 
 // Success sends a success response
@@ -17,6 +25,16 @@ func Success(c *gin.Context, statusCode int, message string, data interface{}) {
 		Success: true,
 		Message: message,
 		Data:    data,
+	})
+}
+
+// SuccessWithMeta sends a success response with metadata
+func SuccessWithMeta(c *gin.Context, statusCode int, message string, data interface{}, meta *Meta) {
+	c.JSON(statusCode, Response{
+		Success: true,
+		Message: message,
+		Data:    data,
+		Meta:    meta,
 	})
 }
 
